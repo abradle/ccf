@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">  
+   <title>LLOOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+
+<script>
+// Function to show the fragments
+function show_frags(my_pk){
+
+var my_frag_url =  mybase + "{% url 'LLOOMMPPAA:get_sdf_info' 2 %}".replace("/2/", "/" + my_pk.toString() + "/")
+
+var my_cmd = "read mol '" + my_frag_url + "'";
+
+runCommand(my_cmd);
+runCommand("display a_FRAG*.* xstick");
+
+
+}
+$(document).ready(function() {
+
+     loadmyprot('m007_b_2')
+     
+}
+)
+
+
+function open_mol(my_url, my_pk){
+
+var icm_url = mybase + my_url;
+if ($("#"+my_pk).attr('checked') == 'checked'){ 
+runCommand('read mol "' +icm_url + '" name="' + my_pk.toString()+'"');
+runCommand('display a_'+my_pk.toString()+'. xstick');
+}
+else{
+runCommand('delete a_'+my_pk.toString()+'.');
+
+}
+};
+</script>
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container-fluid">
+
+<img src="{% url 'LLOOMMPPAA:MakeDendrogram' ra_id %}"></img>
+</div>
+</div>
+</body>
+</html> 

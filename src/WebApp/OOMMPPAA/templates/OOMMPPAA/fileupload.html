@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+    {% load jfutags %}
+   <link href="{% static "OOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/filestyle.js" %}"></script>  
+ <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/> 
+  <link rel="stylesheet" href="{% static "OOMMPPAA/fileupload.css" %}"/>
+  <script>
+  var file_dict = {}
+  var spinner = '{% static "OOMMPPAA/spinner.gif" %}'
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+    	isplugin = isIcmPluginEnabled();
+    	if (isplugin==false){
+    	document.getElementById("mygetstarted").setAttribute("class","btn btn-lg btn-success disabled");
+    	document.getElementById("skiptut").setAttribute("class","btn btn-lg btn-warning disabled");
+    	document.getElementById("skiptut2").setAttribute("class","btn btn-lg btn-default dropdown-toggle disabled");
+    	document.getElementById("noICMdiv").style.display="";
+		};
+    	}
+    	)
+   var mybase = location.protocol+"//"+location.hostname+":"+location.port;
+   
+   
+   function getfiles(eles){
+            for (i=0; i<eles.length; i++){
+	            // So this function uploads the file and lets, one know the success and the file path
+	            upload_file(eles[i].id);
+            }
+   }
+   
+   
+   function fileuploadtext(class_name) {
+   // reset the error box
+   document.getElementById('error-box').innerHTML = "";
+   
+   // Get the target information
+   var targ= document.getElementById('inputDefault').value;
+   // Now loop through the filestyle elements
+   var eles = document.getElementsByClassName(class_name);
+   getfiles(eles);
+   // Need to wait for all the uploads
+   // Now use the infor in that dict to do the rest ----
+        
+        if (class_name=="apptarg"){
+        	if (file_dict["activity"] == undefined && file_dict["molecules"] == undefined && file_dict["protein"] == undefined)
+        	{
+          	document.getElementById("missingbox").style.display=""
+          	return
+        	}
+        }
+         
+        else if (class_name="newtarg"){
+        	if (file_dict["activity"] == undefined || file_dict["molecules"] == undefined || file_dict["protein"] == undefined || targ == "")
+        	{
+          	document.getElementById("missingbox").style.display=""
+          	return
+        	}
+        }
+      
+        	
+        var url_string = mybase+'/run/?prot='+file_dict["protein"]+'&acts='+file_dict["activity"]+'&mols='+file_dict["molecules"]+'&targ='+targ;
+        var request = $.ajax(url_string);
+        request.done(function( msg ) {
+			if(msg=="ERROR"){
+				// Display the error box
+				document.getElementById("missingbox").style.display="none"
+				//document.getElementById("successbox").style.display="none"
+				document.getElementById("errorbox").style.display=""
+			}
+			else if(msg=="LOADING"){
+			document.getElementById("missingbox").style.display="none"
+				document.getElementById("errorbox").style.display="none"
+				window.location.href = "{% url 'OOMMPPAA:success' %}"
+			}
+		});
+		 
+		request.fail(function( jqXHR, textStatus ) {
+		  alert( "Request failed: " + textStatus );
+		});
+		
+		
+		}
+
+        
+  $(document).ready(function() {
+  setTimeout(
+  	function(){
+  		var my_s = '<a class="btn btn-primary" onclick="fileuploadtext()"> <span>Start process</span></a>';
+  		$('form#fileupload').append(my_s);
+  			}
+  	,1)
+          $('ul.nav > li').click(function (e) {
+            e.preventDefault();
+            $('ul.nav > li').removeClass('active');
+            $(this).addClass('active');                
+        });
+        
+        $(":file").filestyle({buttonName: "btn-primary"}); 
+  });
+  
+ 
+// function to update the target info directly
+function refresh_info(target_id,in_val,title) {
+
+file_dict = {}
+var url_string = ""
+
+if (in_val=="undefined"){
+}
+else if (in_val=="delete"){
+   $('#myModal').modal();
+   document.getElementById('target-title').innerHTML = title+'<br></br><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the compounds from the selected points" onclick="refresh_info('+"'"+target_id+"'"+",'confirm','"+title+"'"+')" class="btn btn-sm btn-danger">Delete Target</a>';
+   
+   return;
+}
+else if (in_val=="confirm"){
+   // Delete this target
+   document.getElementById('confirm-body').style.display='none';
+   document.getElementById('wait-body').style.display='';
+   url_string = mybase+'/Viewer/loader/?function=REFRESH&target='+target_id+'&choice=DELETE';
+}
+else if(in_val=="NEW"){
+// Make the JS to delete this guys
+	url_string = mybase+'/Viewer/loader/?function=REFRESH&target='+target_id+'&choice=NEW'
+	var tmp = 1;
+}
+
+var me = 1;
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+// Now we want to stop the big spinny disk
+
+// Now update the internal information
+  $('#myModal').modal('hide');
+  document.getElementById('targ_div').innerHTML = '';
+  document.getElementById('targ_div').innerHTML = data;
+   document.getElementById('confirm-body').style.display='';
+   document.getElementById('wait-body').style.display='none';
+  
+  })
+} 
+
+function progressHandlingFunction(e){
+    if(e.lengthComputable){
+        $('progress').attr({value:e.loaded,max:e.total});
+    }
+}
+
+function upload_file(element){
+ var fileInput = document.getElementById(element);
+ var file = fileInput.files[0];
+ var formData = new FormData();
+ formData.append(element, file);
+    var urlreq = mybase+'/OOMMPPAA/uploadme/';
+    
+    $.ajax({
+        url: urlreq,  //Server script to process data
+        type: 'POST',
+        async: false,
+        xhr: function() {  // Custom XMLHttpRequest
+            var myXhr = $.ajaxSettings.xhr();
+            if(myXhr.upload){ // Check if upload property exists
+                myXhr.upload.addEventListener('progress',progressHandlingFunction, false); // For handling the progress of the upload
+            }
+            return myXhr;
+        },
+        //Ajax events
+        beforeSend: function(){},
+        success: function(){},
+        error: function(error){
+        alert(error);
+        },
+        // Form data
+        data: formData,
+        //Options to tell jQuery not to process data or worry about content-type.
+        cache: false,
+        contentType: false,
+        processData: false
+    }).done(function(data){
+	        // data is a json. info - string of info
+	        // success - bool of success
+	        // file_path - path of the new file - to store in a dict of the processing 
+	        var json_d = $.parseJSON(data);
+	        document.getElementById('error-box').innerHTML += json_d["HTML"];
+	        // now get the succes and filename var
+	        var success = json_d["SUCCESS"];
+	        var filename = json_d["FILENAME"];
+
+	        var my_element = json_d["ELEMENT"];
+	        if(success=="success" || success=="warning"){
+	          file_dict[my_element] = filename;
+	        }
+	        });
+};
+
+// function to add a log file
+
+function log_file_modal(target_id){
+// Define the URL
+var url_string =mybase + "/Viewer/loader/?function=VIEWLOG&choice=1&target="+target_id
+
+$.ajax(url_string).done(function(data){
+
+document.getElementById('log-body').innerHTML = data;
+$('#logModal').modal();
+})
+
+};
+
+  </script>
+  
+  
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+   <title>OOMMPPAA: Home </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+      <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'OOMMPPAA:index'%}" class="navbar-brand">OOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="jumbotron">
+      <h1>OOMMPPAA</h1>
+        <div class="lead">
+          <p>Data management and upload page</p>
+        </div>
+ 	  </div>
+ 	  <center>
+ 	  
+ 	   	     <div class="alert alert-dismissable alert-info" style="display:none" id="helpbox">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Welcome to the upload page...</strong></p>
+              <p>You need to input a 1) Target name 2) CSV file of activity data 3) SDF file of molecules4) protein in the PDB file format .</p>
+              <p>Example data can be found in the "data" directory: <strong>{{ DATADIR }}</strong></p>
+              <p> Go to: <strong>https://bitbucket.org/abradley/oommppaa/wiki/LoadingData</strong> for more info</p>
+            </div>
+            <div id="error-box">
+            </div>
+ 	         <div class="alert alert-dismissable alert-warning" style="display:none" id="missingbox">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>FIELDS MISSING</strong></p>
+              <p>You need to input a 1) Target name (or select an existing target); 2) CSV file; 3) PDB file; 4) SDF file.</p>
+            </div>
+
+<ul id="targ_div" class="nav nav-pills nav-stacked" style="max-width: 300px; margin-bottom:10px;">
+  
+  <li ><a onclick="document.getElementById('helpbox').style.display=''">Help</a></li>
+  <li ><a onclick="document.getElementById('helpbox').style.display='none';document.getElementById('edit-form').style.display='none';document.getElementById('input-id').style.display='';";>Add new target</a></li>
+   {% for Target in targets %}
+  <li onclick="document.getElementById('helpbox').style.display='none'"; class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+      {{ Target.title }}<span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+      <li><a onclick="document.getElementById('inputDefault').value='{{  Target.title  }}';document.getElementById('edit-form').style.display='';document.getElementById('input-id').style.display='none';" >Edit</a></li>
+      <li><a onclick="refresh_info('{{  Target.pk }}','delete','{{  Target.title }}')">Delete</a></li>
+      <li class="divider"></li>
+      <li><a onclick="log_file_modal({{  Target.pk }})">Log file</a></li>
+    </ul>
+  </li>
+  {% endfor %}
+</ul>
+	        <div class="alert alert-dismissable alert-danger" style="display:none" id="errorbox">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p><strong>ERROR!!!</strong></p>
+              <p>Something went wrong...</p>
+              <p><strong>Have you clicked "upload" yet???</strong></p>
+            </div>
+    <div id="buttons-one" style="display:none">
+	</div>	
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">Deleting target</h4>
+      </div>
+      <div id="confirm-body" class="modal-body">
+       <h3>Are you sure you want to delete all information for OOMMPPAA for this target????</h3>
+       <div id="target-title"></div>
+      </div>
+      <div id="wait-body" style="display:none"class="modal-body">
+        <h3>Please wait...</h3>
+        <img src='{% static "OOMMPPAA/spinner.gif" %}'></img>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logModal" tabindex="-1" role="dialog" aria-labelledby="logmodallabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="logmodallabel">Log file</h4>
+      </div>
+      <div id="log-body" class="modal-body">
+      </div>
+    
+    
+    </div>
+  </div>
+</div>
+
+<form id="input-id" style="width:400px;display:none" class="form-horizontal">
+  <fieldset>
+    <legend>Load target form</legend>
+ 	<div style="margin-top:30px" class="col-3 form-group">
+          <label class="control-label" for="inputDefault"><strong>Target name</strong></label>
+           <input type="text" class="form-control" id="inputDefault">
+      </div>
+      <div style="margin-top:30px" class="col-3 form-group">
+           <input name="activity" id="activity" type="file" class="filestyle newtarg" data-buttonText="Activity data" data-buttonName="btn-danger">
+      </div>
+      <div style="margin-top:30px" class="col-3 form-group">
+           <input id="molecules" type="file" class="filestyle newtarg" data-buttonText="Structural data"  data-buttonName="btn-warning">
+      </div>
+      <div style="margin-top:30px" class="col-3 form-group">
+           <input id="protein" type="file" class="filestyle newtarg" data-buttonText="Protein reference"  data-buttonName="btn-success">
+      </div>
+      <a class="btn btn-success" onclick="fileuploadtext('newtarg')"> <span>Upload and do OOMMPPAA</span></a>
+</fieldset></form>
+
+<form id="edit-form" style="width:400px;display:none" class="form-horizontal">
+  <fieldset>
+    <legend>Edit target form</legend>
+      <div style="margin-top:30px" class="col-3 form-group">
+           <input id="append-activity" type="file" class="filestyle apptarg" data-buttonText="Activity data" data-buttonName="btn-danger">
+      </div>
+      <div style="margin-top:30px" class="col-3 form-group">
+           <input id="append-molecules" type="file" class="filestyle apptarg" data-buttonText="Structural data"  data-buttonName="btn-warning">
+       </div>
+       <div style="margin-top:30px" class="col-3 form-group">
+           <input id="append-protein" type="file" class="filestyle apptarg" data-buttonText="Protein reference"  data-buttonName="btn-success">
+      </div>
+      <a class="btn btn-success" onclick="fileuploadtext('apptarg')"> <span>Upload and do OOMMPPAA</span></a> 
+</fieldset></form>
+
+       <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Made by <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a>. Contact him at <a href="mailto:oommppaa.help@gmail.com">oommppaa.help@gmail.com</a>.</p>
+            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+            <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+          </div>
+        </div>
+      </footer>
+       </center>
+  </body>
+ </html>

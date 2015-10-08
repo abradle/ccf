@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "WONKA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "WONKA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script>
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+    	isplugin = isIcmPluginEnabled();
+    	if (isplugin==false){
+    	document.getElementById("mygetstarted").setAttribute("class","btn btn-lg btn-success disabled");
+    	document.getElementById("skiptut").setAttribute("class","btn btn-lg btn-warning disabled");
+    	document.getElementById("skiptut2").setAttribute("class","btn btn-lg btn-default dropdown-toggle disabled");
+    	document.getElementById("noICMdiv").style.display="";
+		};
+
+
+    	}
+    	)
+    	
+ 		  function show_me(my_pk){
+		      document.getElementById("ActiveIcmCtl"+my_pk).display="";
+			  var ctl =document.getElementById('ActiveIcmCtl'+my_pk);
+			  ctl.RunCommands("read binary 'http://163.1.63.28:9010/WONKA/request_observation/?my_pk=my_pk}&me=dl.icb'");
+			  ctl.RunCommands("display a_.*li* cpk");
+			  ctl.RunCommands("display a_*mol*. wire");
+			  ctl.RunCommands("display a_*prot*. xstick");
+			  }
+			  
+			  
+function add_comment(){
+
+var my_j = {}
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+my_j["user"] = {{ user.pk }}
+my_j["comments"] = document.getElementById('inputComments').value
+my_j["observation"] = {{  obs.pk }}
+var URL = "{% url 'WONKA:add_comment' %}";
+    $.post(URL, my_j, function(response){
+        if(response === 'success'){ 
+        
+        window.location.href = "{% url 'WONKA:ShowObs' obs.pk %}";
+        
+         }
+        else{ alert('Error! :('); }
+    });
+}
+
+
+
+function register(){
+  
+var my_j = {}
+my_j["FirstName"] = document.getElementById('inputFirstName').value
+my_j["LastName"] = document.getElementById('inputLastName').value
+my_j["EMail"] = document.getElementById('inputEMail').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+if(document.getElementById('inputPassword').value==document.getElementById('inputConfPassword').value){
+
+my_j["Password"] = document.getElementById('inputPassword').value
+}
+else{
+alert("Passwords don't match!");
+return
+}
+
+
+var URL = "{% url 'WONKA:register_user' %}";
+    $.post(URL, my_j, function(response){
+alert(response);
+
+ });
+  
+  }
+
+
+var OSName="Unknown OS";
+if (navigator.appVersion.indexOf("Win")!=-1) OSName="Windows";
+if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
+if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
+if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
+
+function login(){
+  
+var my_j = {}
+my_j["EMail"] = document.getElementById('inputEMailLOG').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+my_j["Password"] = document.getElementById('inputPasswordLOG').value
+
+var URL = "{% url 'WONKA:login_user' %}";
+    $.post(URL, my_j, function(response){
+alert(response);
+
+ });
+  
+  }
+
+
+
+
+  </script>
+ 	<script>
+
+	Module = {
+	  memoryInitializerPrefixURL:'{% static "WONKA/lib/" %}',
+	  preInit: function() { /*alert('preinit');*/ }
+	}
+	</script>
+	<script src="{% static "WONKA/lib/libicm.js" %}"> </script>
+	    
+  
+  <link rel="stylesheet" href="{% static "WONKA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "WONKA/icon.ico" %}" type="image/x-icon">
+   <title>WONKA: {{obs.comments}} </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'WONKA:index'%}" class="navbar-brand">WONKA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'WONKA:Summarise' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/wonka/wiki/Home">Bitbucket</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-left">
+            <li><a>{{ target.title }}</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:50px;"  class="container-fluid">
+	      <div class="col-lg-8">
+		      <h3>{{obs.author}}:</h3> {{obs.comments}}
+		      <div id="ICM-container">
+			  <div id="act_div" style="width: 100%; height: 600px; border: 2px solid #ABABAB"></div>
+ 	   <div style="margin-top:20px;margin-bottom:20px">
+          <a class="btn-lg btn-success" href="{% url 'WONKA:Summarise' target.pk %}">BACK TO {{target.title}}</a>
+         <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Gives ICM a brutal black background" class="btn btn-sm btn-default" onclick="ctl.RunCommands('color background rgb={0,0,0}');">Dark display</a>
+          <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Gives ICM a shiny white background" class="btn btn-sm btn-default" onclick="ctl.RunCommands('color background rgb={255,255,255}');">White display</a>
+          </div>
+          </div>
+ 	  <center>
+			  <script>
+				//var ctl =document.getElementById('ActiveIcmCtl');
+				function onLoadActiveIcm(){
+				act = new Module.ActiveIcm("act_div",0,0);
+	            //var ctl =document.getElementById('ActiveIcmCtl');
+	 			act.OpenProject('{{obs.my_src }}',{})
+				 // ctl.RunCommands("read binary '{{obs.my_src }}'");
+				  //ctl.RunCommands("display a_*key_water.* xstick  red");
+				 // ctl.RunCommands("display a_*key_site.* xstick");
+				  //ctl.RunCommands("display a_*key_site.* cpk");
+				  //ctl.RunCommands("display a_*RESME*.* xstick");
+
+				  //ctl.RunCommands("display a_*water.* &! a_*key_water.* xstick  blue");
+				  //ctl.RunCommands("undisplay a_*water.* cpk");
+				  //ctl.RunCommands("display a_url*. xstick");
+				  //ctl.RunCommands("undisplay a_url*. cpk");
+				  //ctl.RunCommands("display a_*mol*. xstick");
+				  //ctl.RunCommands("display a_*prot*. ribbon");
+				  
+				  //ctl.RunCommands("display Res(Sphere(a_*mol*. a_*prot*. 5.0) & a_*prot*.) xstick");
+				  //ctl.RunCommands("display a_*key_*. cpk");
+				  //ctl.RunCommands("display a_*ph4. cpk");
+				}
+				</script>
+		  </div>
+		 <div style="y-overflow:scroll">
+
+<p></p>
+
+ <div class="col-lg-4" id="disqus_thread"></div>
+    <script type="text/javascript">
+    // Get the thread ID
+    my_url = "http://disqus.com/api/3.0/threads/list.json?api_key={{ public_key }}&forum=wonkadiscuss&thread:ident={{ uniq_id }}"
+
+$.ajax({
+  url: my_url,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+        var my_j = $.parseJSON(data)
+        var my_id = my_j["response"][0]["id"]
+        // Now use this to subscrube
+        $.ajax({
+		  type: "GET",
+		  url: "{% url 'WONKA:subscribe_to_disqus' %}",
+		  data: {
+		    "email": "{{ user.email }}", 
+		    "thread": my_id, 
+		  },
+		  success: function(data){},
+		});
+
+});
+ 
+       {% load disqus_tags %}
+       {% disqus_sso %}
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = '{{ short_name }}'; // required: replace example with your forum shortname
+		var disqus_identifier = "{{ uniq_id }}";
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    
+{% if user.is_authenticated %}
+
+
+{% else %}
+
+	{% endif %}
+      </div>
+ 	  </div>
+ 	   <center>
+      <footer>
+        <div class="row">
+
+          <div class="col-lg-12">
+            <p>Made by <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a>. Contact him at <a href="mailto:anthony.bradley@worc.ox.ac.uk">anthony.bradley@worc.ox.ac.uk</a>.</p>
+            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+            <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+          </div>>
+        </div>
+      </footer>
+       </center>
+  </body>
+ </html>

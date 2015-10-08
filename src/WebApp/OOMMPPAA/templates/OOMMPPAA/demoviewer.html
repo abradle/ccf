@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "OOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/bootstrap.min.js" %}"></script>
+      <script src="{% static "OOMMPPAA/spin.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <script src="{% static "OOMMPPAA/icbDetection.js" %}"></script>
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">
+   <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/> 
+  <title>OOMMPPAA: {{ target.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+   
+ <script>
+
+ $(function () { $("[data-toggle='tooltip']").tooltip(); }); 
+ 
+var loadmymolold = "";
+var target_id = {{ target.pk }};
+var target_name= '{{ target.title }}';
+function loadmymol(){
+// javascript function to run when loading molecular images
+pdb_code = document.getElementById('pdbin').value;
+if(pdb_code == loadmymolold){
+// Don't submit the same request twice
+  var me=1;
+}
+else{
+// Delete an existing molecule
+runCommand('GRAPHICS.l_redraw = no');
+runCommand('delete a_.* &! a_act.* &! a_inact.* &! a_shape.* &! a_{{ target.title }}TEMP.* ');
+runCommand('GRAPHICS.l_redraw = yes');
+runCommand('display new');
+// Reset the catch variable
+loadmymolold = pdb_code;
+// load the macro, wait two seconds for this to finish
+var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+runCommand('call "'+mynewurl+'"');
+// First make a call to see what it is (PDB code, valid smiles or not either -> returns None or PDB code either way)
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=CHECKMOL&target={{  target.pk }}';
+var me = "";
+document.getElementById('im2-container').style.display="";
+document.getElementById('im-container').style.display="";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   pdb_code = data;
+   if(pdb_code=="None molecule"){
+     document.getElementById('mynewcanv-error').style.display="";
+     document.getElementById('mynewcanv3-error').style.display="";
+   }
+   else{
+     document.getElementById('mynewcanv-error').style.display="none";
+     document.getElementById('mynewcanv3-error').style.display="none";
+  // Now make the actual request for the molecule
+   var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+   runCommand('read mol "'+url_string+'"');
+   runCommand('display a_.* &! a_act.* &! a_inact.* &! a_shape.* xstick');
+   // And for the image
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=1&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv');
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=3&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv3');
+    }
+  })
+}
+}
+function updateMap(val){
+// function to update the activiy maps
+
+// First get the values
+var my_acts = $('#act').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+var my_act = parseFloat(my_acts[0]).toFixed(2);
+var max_act = parseFloat(my_acts[1]).toFixed(2);
+var my_points = $('#pharm').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+var my_point = parseInt(my_points[0]);
+var max_point = parseInt(my_points[1]);
+// Now check how many points
+var url_string_new =mybase+'/Viewer/loader/?function=CHECKPOINTS&choice='+my_point+','+max_point+','+my_act+','+max_act+'&target={{  target.pk }}';
+
+var myMaps=new Array();
+var myPks =new Array();
+runCommand('deleteObjs "star" Atom(a_act.)');
+runCommand('deleteObjs "cube" Atom(a_inact.)');
+runCommand('deleteObjs "doublepyramid" Atom(a_non.)');
+{% for map in maps %}
+myMaps[{{ forloop.counter0 }}] = '{{map.type}}'
+myPks[{{ forloop.counter0 }}] = {{ map.pk }}
+{% endfor %}
+var myswitch = 0;
+
+
+for (var i=0;i<myMaps.length;i++)
+	{
+	if ($('#choice'+myMaps[i]+'blah').is(':checked'))
+		{
+		myswitch+=1;
+		if (myMaps[i]=="shape" && val !=1){
+		$('#ph4points').addClass('glow');
+		}
+		};
+	};
+	
+if (val==1){
+	myswitch = -2
+
+}	
+if(myswitch==0){
+$('#ph4points').addClass('glow');
+}
+setTimeout(function(){
+$('#ph4points').removeClass('glow');
+
+	},500
+	);
+
+// First make a call to see how many points would be effected
+
+var me = "";
+$.ajax({
+  url: url_string_new,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+  
+  if(data > 300){
+  
+  	document.getElementById('point-error').style.display="";
+  
+  }
+  
+  else{
+  for (var i=0;i<myMaps.length;i++)
+	{
+	if ($('#choice'+myMaps[i]+'blah').is(':checked'))
+		{
+		loadpdblight(myMaps[i],myPks[i])
+		};
+	};
+	}	
+	})
+
+}
+
+
+function  letsshape2(shape){
+// function to put  shapes into the ICM viewer
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	runCommand('read binary "'+myurl+'" name="'+shape+'"')
+	runCommand('undisplay '+shape)
+};
+
+
+ $(function(){
+    $("[data-hide]").on("click", function(){
+        $("." + $(this).attr("data-hide")).hide();
+        // -or-, see below
+        // $(this).closest("." + $(this).attr("data-hide")).hide();
+    });
+});
+var mydivs = new Array('ICM','maps','sliders','act','cmpd');
+var spinner = '{% static "OOMMPPAA/spinner.gif" %}'
+
+function onready(){
+    // load the macro
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+	runCommand('call "'+mynewurl+'"');
+	// Now load in the shapes
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	letsshape2('star');
+	letsshape2('cube');
+    var spinurl = mybase+spinner;
+    var img = document.createElement("IMG");
+    img.src = spinurl;     		
+	    	/* Make sliders */
+	        $("#pharm").slider({});
+	        $("#act").slider({});
+	        // to designate the slider values
+     		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display="none";
+    		 }
+	        setTimeout(function(){loadmyprot('{{ target.title }}TEMP')},2000)
+
+}
+// Load the protein and the molecule in
+    	$(document).ready(function() {
+    	
+    	isICMdone()
+   
+    	});
+    	
+
+function isICMdone(){
+// Function to check if ICM is ready to go!
+    var counter_w = 0;
+  try{
+	  var tmpctl =  document.getElementById('ActiveIcmCtl');
+	  tmpctl.RunCommands("a = 1");
+	  counter_w +=1;
+	  onready();
+	  }
+  
+	  catch(e){
+
+	  console.log(e);
+	  console.log(counter_w);
+	  
+	  setTimeout(isICMdone,1000);
+	  
+	  }
+  
+};
+
+// Now do the breadcrumbs functionality
+var crumbct = 0;
+
+// for the map checkbox constraint
+var val1 = 0;
+var val2= 0;
+var val3 = 0;
+
+// for the ICM constraints
+var icmval1 = 0;
+var icmval2= 0;
+var icmval3 = 0;
+
+// for the display MMP constraints -> found in ICM_funs.js
+
+// to give the slider constraints global scope
+var crmy_act = 0.0;
+var crmax_act =0.0;
+var crmy_point = 1;
+var crmax_point = 1;
+
+function crumbs(cnt){
+			crumbct = cnt;
+			var div = mydivs[cnt];
+            var myshow = "block";
+            // remove the pre-container
+            document.getElementById('pre-container').style.display='none';
+
+            
+            // Reset the divs
+     		for (var i = 0; i < mydivs.length; i++) {
+     		  if(mydivs[i]!="ICM")
+     		  {
+    		    document.getElementById(mydivs[i]+'-container').style.display=myshow;
+    		  }
+    		  if(div==mydivs[i]){
+    		  myshow = "none";
+    		  };
+			};
+			// Reset the text amd the attribute
+     		for (var i = 0; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-text').style.display="none";
+    		  document.getElementById(mydivs[i]+'-crumb').setAttribute("class","");
+    		  if(div==mydivs[i]){
+              document.getElementById(mydivs[i]+'-text').style.display="inline-block";
+              document.getElementById(mydivs[i]+'-crumb').setAttribute("class", "active");
+    		  };
+    		 };	
+    		// Set the crumbs
+    		document.getElementById(div+'-crumb').style.display="inline-block";
+    		// Any extras
+    		if(div=="ICM"){
+    		document.getElementById('home-container').style.display="block";
+    		document.getElementById('home-text').style.display="none";
+    		}
+};
+
+function startcr(){
+    		// undisplay all the divs
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='none';
+			}
+
+};
+function movecr(val){
+ 
+  crumbct=crumbct+val
+  // If you have not displayed the protein appropriately
+   if(crumbct==1){
+    if(icmval3==1){
+    }
+    else if(icmval1==0 || icmval2==0){
+    document.getElementById('ICM-error').style.display='';
+    crumbct=crumbct-val
+	return true;
+	}
+	else{
+	document.getElementById('ICM-error').style.display='none';
+	  icmval3=1;
+	}
+	}  
+  // If you have not checked all the checkboxes it will complain at you
+  if(crumbct==2){
+    if(val3==0 || val2==0  || val1==0){
+    document.getElementById('maps-error').style.display='';
+    crumbct=crumbct-val
+	return true;
+	}
+	else{
+	document.getElementById('maps-error').style.display='none';
+	}
+	}
+// If you haven't done the correct thing with the sliders
+  if(crumbct==3){
+	crmy_acts = $('#act').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+	crmy_act = parseFloat(crmy_acts[0]);
+	crmax_act = parseFloat(crmy_acts[1]);
+	crmy_points = $('#pharm').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+	crmy_point = parseInt(crmy_points[0]);
+	crmax_point = parseInt(crmy_points[1]);  
+  
+	// The requirements are based on the sliders
+	if(crmy_act!=0.4 || crmax_act!=1.0 || crmy_point != 1 || crmax_point != 4){
+    document.getElementById('sliders-error').style.display='';
+    crumbct=crumbct-val;
+    document.getElementById('sliders-error-info').innerHTML = "<p>You did activity change between "+crmy_act+" and "+crmax_act+" log units and pharmacophore differences between "+crmy_point+" and "+crmax_point+"</p> <strong><p>Have you remembered to press the Refresh button?<p></strong>"
+	return true;
+	}
+	else{
+	document.getElementById('sliders-error').style.display='none';
+	}
+	}
+// If you haven't done the correct thing with the mmps
+  if(crumbct==4 && dispconst==0){
+    document.getElementById('act-error').style.display='';
+    crumbct=crumbct-val
+	return true;
+	}
+	else if(crumbct==4){
+	document.getElementById('searchbutt').setAttribute("class", "btn btn-sm btn-primary");
+	document.getElementById('act-error').style.display='none';
+	}
+	
+	
+// If you're at the end of the counters
+  if(crumbct==mydivs.length){
+  // If you've displayed 1qmz (values set in showmol();)
+  if(loadmymolold=="1qmz"){
+  // Undisplay everything
+  startcr();
+  document.getElementById('home-container').style.display='none';
+  document.getElementById('ICM-container').style.display='none';
+  // Display the final box
+   document.getElementById('fin-error').style.display='none';
+   document.getElementById('fin-container').style.display='';
+  }
+  else{
+    // Otherwise don't disable the button -> show an error message 
+    crumbct+=-1
+    //document.getElementById('crnextbutt').setAttribute("class", "btn btn-md btn-info disabled");
+    document.getElementById('fin-error').style.display='';
+    }
+  }
+  else{
+  document.getElementById('crnextbutt').setAttribute("class", "btn btn-md btn-info");
+  }
+  if(crumbct==-1){
+    crumbct+=1
+    document.getElementById('crbackbutt').setAttribute("class", "btn btn-md btn-info disabled");
+  }
+  else{
+  document.getElementById('crbackbutt').setAttribute("class", "btn btn-md btn-info");
+  }
+  crumbs(crumbct);
+};
+$(document).keypress(function(event) {
+	
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if (keycode == '13') {
+        event.preventDefault();
+        $('#searchbutt').click();
+    }
+});
+
+</script>
+  </head>
+  <body> 
+
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'OOMMPPAA:index'%}" class="navbar-brand">OOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'OOMMPPAA:viewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+
+            
+             <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+                               <li><a tabindex="-1"href="https://bitbucket.org/abradley/oommppaa/downloads/Setup.exe">Windows</a></li>
+                               <li class="divider"></li>
+                               <li><a tabindex="-1"href="https://bitbucket.org/abradley/oommppaa/src">Source</a></li>
+                            </ul>
+            </li>
+          </ul>
+          <form class="navbar-form navbar-left">
+            <input id="pdbin" type="text" class="form-control col-lg-8" placeholder="Input SMILES or code">
+          </form>
+          <ul class="nav navbar-nav">
+            <li>
+              <a  id="searchbutt" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Search for this PDB id or SMILES" class="btn btn-sm btn-primary disabled" onclick="loadmymol();">Search</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12">
+      <p></p> 
+	</div>
+  </div>
+  
+  
+  
+  
+  
+   <div class="row">
+  	  <div class="col-lg-3"> 
+      <div class="well" id="maps-container">
+		{% for map in maps %}
+			{% if map.type == "act" %}
+			<div  id="ph4points" style="margin-bottom:5px;">
+				<div  style="margin-bottom:5px;text-align:center;">
+					Pharmacophore change
+				</div>
+			  <div style="margin-top:0px" class="checkbox">
+                <label>
+                  <input  data-toggle="tooltip" data-placement="left" title="" data-original-title="Show pharmacophore differences that improve activity" type="checkbox" id="choice{{map.type}}blah"; value="{{ map.pk }}" onclick="document.getElementById('act-inact-po').style.display='';document.getElementById('{{map.type}}-po').style.display='';updateMap(1);val1=1;"> Improving activity
+                </label>     
+              </div>
+			{% endif %}
+			{% if map.type == "inact" %}
+			  <div class="checkbox">
+                <label>
+                  <input data-toggle="tooltip" data-placement="left" title="" data-original-title="Show pharmacophore differences that reduce activity" type="checkbox" id="choice{{map.type}}blah"; value="{{ map.pk }}" onclick="document.getElementById('act-inact-po').style.display='';document.getElementById('{{map.type}}-po').style.display='';updateMap(1);val2=1;"> Reducing activity
+                </label>     
+              </div>
+            </div>
+			{% endif %}
+			{% if map.type == "shape" %}
+			<hr>
+			  <div style="margin-bottom:0px" class="checkbox">
+                <label>
+                  <input   data-toggle="tooltip" data-placement="left" title="" data-original-title="Show the centre of mass of each MMP - coloured by activity difference" type="checkbox" id="choice{{map.type}}blah"; value="{{ map.pk }}" onclick="document.getElementById('{{map.type}}-po').style.display='';loadpdblight('{{map.type}}','{{ map.pk }}');val3=1;"> Centre of mass of each pair
+                </label>     
+              </div>
+			{% endif %}
+		{% endfor %}
+		</div>
+		<div id="ICM-error" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <strong> Please follow instructions. Undisplay the protein on a white background, using the buttons below the viewer.</strong> 
+         </div>
+         
+		<div id="maps-error" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <strong> Please follow instructions. Click ALL the checkboxes.</strong> 
+         </div>
+		<div style="text-align:center"class="well" id="sliders-container">
+		<div class="alert alert-dismissable alert-danger" style="display:none" id="point-error">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. </strong> You are trying to view too many points. Reduce one of the slider ranges.</p>
+         </div>
+        <p data-toggle="tooltip" data-placement="left" title="" data-original-title="Change the number of changes between molecuels for the pharmacophore changes">Pharmacophoric changes: <br></br><b> 1</b>
+        <input id="pharm" type="text" class="span2" value="" data-slider-min="1" data-slider-max="6" data-slider-step="1" data-slider-value="[1,5]"/>
+        <b> 6</b><p>
+        <p data-toggle="tooltip" data-placement="left" title="" data-original-title="Change the activity change range for the pharmacophore changes">Activity change: <br></br><b>0</b>
+        <input id="act" type="text" class="span2" value="" data-slider-min="0" data-slider-max="4" data-slider-step="0.2" data-slider-value="[0.8,1.0]"/>
+        <b>4</b><p>
+        <a id="updatemapbut" onclick="updateMap();" class="btn btn-sm btn-success">Refresh</a>
+	    </div>
+		<div id="sliders-error" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <strong> Please follow instructions.</strong> Chose between 1 and 4 pharmacophoric differences and between 0.4 and 1.0 log unit activity difference.
+              <div id="sliders-error-info"></div>
+         </div>
+	    <div style="display:none" class="well" id="im-container">
+	      <center>
+	        <p>Fit to activity and inactivity points </p>
+	        <div class="alert alert-dismissable alert-danger" style="display:none" id="mynewcanv-error">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. </strong> What you have entered is neither a valid pdb code nor a valid smiles string.</p>
+            </div>
+	        <div id="mynewcanv"></div>
+	      </center>
+	    </div>
+
+	 </div>
+	
+	<div class="col-lg-6">
+	<p>
+	<ul class="breadcrumb" style="margin-bottom: 5px;">
+                <li id="ICM-crumb" onclick="crumbs(0)">Home</li>
+                <li onclick="crumbs(1)" style="display:none" id="maps-crumb">Maps</li>
+                <li style="display:none" id="sliders-crumb" onclick="crumbs(2)" >Sliders</li>
+                <li style="display:none" id="act-crumb" onclick="crumbs(3)">Activity Data</li>
+                <li style="display:none" id="cmpd-crumb" onclick="crumbs(4)"> Enter Compound</li>
+    </ul>
+    
+	</p>
+	<div class="" id ='home-text'>
+	  <strong>
+	  <p style="text-align:center">Welcome to the Tutorial for OOMMPPAA.</p>
+	  </strong>
+	</div>
+
+	<div class="" id ='ICM-text' style="display:none">
+	     <p>Below is the molecular display, using ActiveICM.  </p>
+	     <p><strong>Rotate</strong> the view using the left-click and drag. <strong>Translate</strong> by left-click+ctrl and drag</p>
+	     <p><strong>Zoom</strong> in by left-click and drag on the left-hand side of the screen. <strong>Crop</strong> left-click and drag on on the right-hand side of the screen. 
+	     <p><strong>Recentre</strong> using the button at the bottom of the plugin</p>
+	     
+	     <p style=""><strong>As your first task:</strong> undisplay the protein and show a white background using the buttons below the ICM display.</p>
+	   
+	</div>
+	<div class="" id ='maps-text' style="display:none">
+	    <p>The checkboxes to the left are used to show points of interest</p>
+	    <div class="well well-sm" style="display:none" id="act-inact-po"><p><a class="text-danger">Red: H-bond acceptors</a> <a style="color:blue">Blue: H-bond donors</a> <a class="text-info">Cyan: Aromatic</a> <a style="color:brown">Brown: Hydrophobic</a></p>
+	    <div style="display:none" id="act-po"><p><strong> Stars</strong> Improving activity -> pharmacophore points that increase activity. </p></div>
+	    <div style="display:none" id="inact-po" ><p><strong>Cubes</strong> Reducing activity -> pharmacophore points that decrease activity. </p></div>
+	    </div>
+		    <div id="shape-po" class="well well-sm" style="display:none"><p>Coloured by activity change <a style="color:blue">BLUE</a> to <a style="color:red">RED</a>, <a style="color:blue">LOW</a> to <a style="color:red">HIGH</a></p>
+		    <p><div><strong>Spheres</strong> All pairs -> all of the matched molecular pairs. </div></p></div>
+
+	  
+	    <p style=""><strong>As your second task:</strong> check all three before progressing</p>
+	</div>
+	<div id ='sliders-text' style="display:none">
+	   <p>The sliders to the left control the stars and cubes you have in the central display</p>
+	   <p><strong>Pharmacophore</strong>: The top slider selects the minimum and maximum number of pharmacophore changes between compounds</p>
+	   <p><strong>Activity</strong>: The bottom slider selects the minimum and maximum activity change between compounds</p>
+
+	  <p>Update the change using the <strong>Refresh</strong> button</p>
+	  	 
+	    <p style=""> <strong>As your third task:</strong> show all activity increasing and decreasing points with an activity change between 0.4 and 1.0 and a number of pharmacophore between 1 and 4</p>
+	</div>
+	<div id ='act-text' style="display:none">
+	   <p>The display and buttons to the right show the chemical changes and activity data for the points in the central display</p>
+	   <p><strong>Right-click and drag</strong> the mouse over the ICM display. A selected point will be highlighted in Green. Then <strong>click "Display compounds"</strong> to show the matched pairs</p>
+	   <p style=""><strong>As your fourth task:</strong> show some matched pairs in the right-hand display</p>
+	</div>
+        <div id="fin-error" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. You have not defined a compound to develop.</strong></p><p>Type "1qmz" or a valid smiles string in the top search bar.</p>
+        </div>	
+	<div class="" id ='cmpd-text' style="display:none">
+	     <strong><p>You can use OOMMPPAA to develop lead compounds</p></strong>
+	     <p><div class="text-danger">On the top bar there is a search box</div> <p>Type in a <strong>SMILES string</strong> and OOMMPPAA will search for compounds for this target. The most similar compound by Morgan fingerprint will be shown below.</p>
+	     <p>Type in a <strong>PDB code</strong> and if this complex has been loaded the compound will be displayed in 3D below.</p>
+	     <p>Two "Feature Maps" will appear on either side of the display. <p><strong>Map one:</strong> shows the pharmacophoric conservation of the compound against compounds complexed for this target.</p>
+	     <p><strong>Map two: </strong> shows the fit of your compound to the Activity Increasing and Activity Reducing pharmacophore points</p>
+	     
+	     <p style="" ><strong>As your penultimate task:</strong> type "1qmz" into the search bar above and click Search or type enter</p>
+
+	</div>
+	
+	<div style="display:none" id="cmpd-container"></div>
+	
+	<div style="display:none" id="home-container">
+	<center>
+	  <a id="crbackbutt" style="margin-bottom:10px" class="btn btn-md btn-info" onclick="movecr(-1);">Back</a>
+	  <a id="crnextbutt" style="margin-bottom:10px" class="btn btn-md btn-info" onclick="movecr(1);">Next</a>
+	</div>
+	<div id="pre-container">
+	<center>
+	  <a style="margin-bottom:10px" class="btn btn-lg btn-success" onclick="startcr();crumbs(0)">Start</a>
+	</center>
+	</div>
+	<div id="ICM-container">
+	<object type="application/x-molsoft-icb" style="width: 100%; height:450px; margin: 0 !important;" id="ActiveIcmCtl">
+	<param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	<param value="windowed" name="wmode">
+	</object>
+	<p></p>
+
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Gives ICM a shiny white background" class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');icmval1=1">White display</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Gives ICM a brutal black background" class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');icmval1=0">Dark display</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Undisplay the protein"  style="margin-left:20px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. ');icmval2=1">Protein off</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the protein as skin" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. xstick');runCommand('display a_{{ target.title}}TEMP. skin');icmval2=0">Surface</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the protein as stick and cartoon" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. skin');runCommand('display a_{{ target.title}}TEMP. xstick');icmval2=0">Stick</a>
+	</div>
+	<p></p>
+	<center>
+    <a style="margin-left:10px" class="btn btn-sm btn-success" onclick="togglett('on')">Help On</a>
+	<a style="margin-left:10px" class="btn btn-sm btn-danger" onclick="togglett('off')">Help Off</a>
+	</center>
+	<div style="display:none" id="fin-container">
+	  <center>
+            <a href="{% url 'OOMMPPAA:viewer' 2 %}" type="button" class="btn btn-lg btn-success"><p>You are an OOMMPPAA master! Let's GO!!!</p></a>
+		</center>
+	</div>		
+	
+	</div>
+    <div id="act-container" style="overflow-y:scroll;height:435px;"class="col-lg-3 well">
+    <center>
+      <p>
+      <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the compounds from the selected points" onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+      <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Remove those compounds from the 3D display" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove</a>
+      </p>
+  	  <div style="margin-top:5px;" id="newmolcanv" >
+      </div>
+        <div id="MMPError" style="display:none" class="alert alert-dismissable alert-warning">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. You have not selected any points.</strong></p><p>Right-click and drag to select a point or points.</p><a href="{% static "OOMMPPAA/animation.gif" %}" target="_blank" ><strong>Need a demo?</strong></a>
+        </div>
+        <div id="MMPTooManyError" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. You have selected TOO MANY points.</strong></p><p>Select fewer points or you will kill the server and be waiting FOREVER</p><a href="{% static "OOMMPPAA/animation.gif" %}" target="_blank" ><strong>Need a demo?</strong></a>
+        </div>
+      <div id="act-error" style="display:none" class="alert alert-danger">
+      <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+      <strong> Please follow instructions. Make a selection in the display.</strong> 
+      </div>
+     </center>
+    </div>
+	    <div style="display:none" class="col-lg-3 well" id="im2-container">
+	      <center>
+	        <p>Pharmacophoric conservation </p>
+	        	        <div class="alert alert-dismissable alert-danger" style="display:none" id="mynewcanv3-error">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. </strong> What you have entered is neither a valid pdb code nor a valid smiles string.</p>
+            </div>
+	        <div id="mynewcanv3"></div>
+	      </center>
+	    </div>
+  </div>
+</div>
+</body>
+</html> 

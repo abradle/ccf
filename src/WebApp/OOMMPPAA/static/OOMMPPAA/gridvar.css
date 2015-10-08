@@ -1,0 +1,178 @@
+/*! 
+gridvar - v1.0.0 - 2014-01-02
+Copyright (c) 2014, Novartis Institutes for Biomedical Research, Inc.
+with a principal place of business at:
+
+250 Massachusetts Avenue
+Cambridge, MA 02139 USA
+http://opensource.novartis.com
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+
+* Neither the name of the Novartis Institutes for BioMedical Research, Inc. nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/ 
+
+/* line 7, sass/gridvar.scss */
+.nibr-gridVar-left {
+  float: left;
+  width: auto;
+}
+
+/* line 12, sass/gridvar.scss */
+text.nibr-gridVar {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 10px;
+}
+
+/* line 17, sass/gridvar.scss */
+.nibr-gridVar-container {
+  width: auto;
+  max-width: 85%;
+  overflow: auto;
+}
+
+/* line 24, sass/gridvar.scss */
+.nibr-gridVar-heatmap .row {
+  cursor: pointer;
+}
+/* line 26, sass/gridvar.scss */
+.nibr-gridVar-heatmap .row rect {
+  stroke: white;
+  stroke-width: 0px;
+  opacity: 1;
+}
+/* line 32, sass/gridvar.scss */
+.nibr-gridVar-heatmap .row .current .clicked rect {
+  stroke: black;
+}
+/* line 35, sass/gridvar.scss */
+.nibr-gridVar-heatmap .row .current text {
+  font-weight: bold;
+}
+/* line 38, sass/gridvar.scss */
+.nibr-gridVar-heatmap .row .current .column text {
+  font-weight: normal;
+}
+
+/* line 45, sass/gridvar.scss */
+.nibr-gridVar-axis.y {
+  shape-rendering: crispEdges;
+}
+/* line 47, sass/gridvar.scss */
+.nibr-gridVar-axis.y path, .nibr-gridVar-axis.y line {
+  fill: none;
+  stroke-width: 0;
+}
+
+/* line 53, sass/gridvar.scss */
+.nibr-gridVar-axis.x {
+  shape-rendering: crispEdges;
+}
+/* line 55, sass/gridvar.scss */
+.nibr-gridVar-axis.x path, .nibr-gridVar-axis.x line {
+  fill: gray;
+  stroke: gray;
+}
+
+/* line 61, sass/gridvar.scss */
+rect.nibr-gridVar-bar {
+  stroke: white;
+  fill: #afafaf;
+}
+
+/* line 67, sass/gridvar.scss */
+.nibr-gridVar-xaxis path, .nibr-gridVar-xaxis line {
+  fill: none;
+  stroke: gray;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+/* line 74, sass/gridvar.scss */
+.nibr-gridVar-xaxis text {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 10px;
+  fill: gray;
+  text-anchor: end;
+}
+
+/* line 82, sass/gridvar.scss */
+.nibr-gridVar-yaxis text {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 10px;
+  fill: gray;
+}
+
+/* line 88, sass/gridvar.scss */
+.nibr-gridVar-x.label {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 10px;
+  fill: gray;
+  text-anchor: end;
+}
+
+/* line 97, sass/gridvar.scss */
+.nibr-gridVar-legend svg {
+  padding: 5px;
+}
+
+/* line 102, sass/gridvar.scss */
+.nibr-gridVar-legend-category-label {
+  font-size: 10px;
+  fill: gray;
+  font-family: "Lucida Console", Monaco, monospace;
+}
+
+/* line 108, sass/gridvar.scss */
+.nibr-gridVar-legend-label {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 10px;
+  color: #646464;
+}
+
+/* line 114, sass/gridvar.scss */
+.nibr-gridVar-legend-swatch {
+  stroke: #a9a9a9;
+  stroke-width: 1px;
+}
+
+/* line 119, sass/gridvar.scss */
+.nibr-gridVar-legend-glyph {
+  stroke: #444444;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* line 125, sass/gridvar.scss */
+.nibr-gridVar-exportButtons {
+  font-size: 11px;
+  color: #6464dc;
+  margin: 0px 4px 0px 4px;
+}
+
+/* line 131, sass/gridvar.scss */
+.nibr-gridVar-exportButtons:hover {
+  text-decoration: underline;
+  color: #6464dc;
+}

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "WONKA/filesaver.js" %}"></script>
+   <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/> 
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">  
+   <title>LLOOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/amcharts.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/serial.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/none.js"></script>
+
+<style>
+#chartdiv {
+	width		: 450px;
+	height		: 240px;
+	font-size	: 11px;
+}
+</style>
+<script>
+
+var my_obj = Object();
+
+
+var chart = AmCharts.makeChart("chartdiv", {
+    "type": "serial",
+    "theme": "none",
+    "dataProvider": [{
+        "country": "USA",
+        "visits": 2025
+    }, {
+        "country": "China",
+        "visits": 1882
+    }, {
+        "country": "Japan",
+        "visits": 1809
+    }, {
+        "country": "Germany",
+        "visits": 1322
+    }, {
+        "country": "UK",
+        "visits": 1122
+    }, {
+        "country": "France",
+        "visits": 1114
+    }, {
+        "country": "India",
+        "visits": 984
+    }, {
+        "country": "Spain",
+        "visits": 711
+    }, {
+        "country": "Netherlands",
+        "visits": 665
+    }, {
+        "country": "Russia",
+        "visits": 580
+    }, {
+        "country": "South Korea",
+        "visits": 443
+    }, {
+        "country": "Canada",
+        "visits": 441
+    }, {
+        "country": "Brazil",
+        "visits": 395
+    }],
+    "valueAxes": [{
+        "gridColor":"#FFFFFF",
+		"gridAlpha": 0.2,
+		"dashLength": 0
+    }],
+    "gridAboveGraphs": true,
+    "startDuration": 1,
+    "graphs": [{
+        "balloonText": "[[category]]: <b>[[value]]</b>",
+        "fillAlphas": 0.8,
+        "lineAlpha": 0.2,
+        "type": "column",
+        "valueField": "visits"		
+    }],
+    "chartCursor": {
+        "categoryBalloonEnabled": false,
+        "cursorAlpha": 0,
+        "zoomable": false
+    },
+    "categoryField": "country",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "gridAlpha": 0,
+         "tickPosition":"start",
+         "tickLength":20
+    },
+	"exportConfig":{
+	  "menuTop": 0,
+	  "menuItems": [{
+      "icon": '/lib/3/images/export.png',
+      "format": 'png'	  
+      }]  
+	}
+});
+
+function runCommandTWO(s_command) {
+var ctl =document.getElementById('ActiveIcmCtlTWO');
+ctl.RunCommands(s_command);
+}
+
+// Function to show the fragments
+function show_frags(my_pk){
+
+var my_frag_url =  mybase + "{% url 'LLOOMMPPAA:get_sdf_info' 2 %}".replace("/2/", "/" + my_pk.toString() + "/")
+
+var my_cmd = "read mol '" + my_frag_url + "'";
+
+runCommand(my_cmd);
+runCommand("display a_FRAG*.* xstick");
+
+
+}
+$(document).ready(function() {
+
+     loadmyprot('{{p_code}}');
+     var url_string = mybase+'/Viewer/loader/?choice={{p_code}}&function=VIEWPROTEIN';
+     runCommandTWO('read pdb "'+url_string+'" name="{{p_code}}"');
+     runCommandTWO('display a_{{p_code}}. xstick');    
+}
+)
+
+
+function open_mol(my_url, my_pk){
+
+var icm_url = mybase + my_url;
+if ($("#"+my_pk).attr('checked') == 'checked'){ 
+runCommand('read mol "' +icm_url + '" name="' + my_pk.toString()+'"');
+runCommand('display a_'+my_pk.toString()+'. xstick');
+}
+else{
+runCommand('delete a_'+my_pk.toString()+'.');
+
+}
+};
+function open_molTWO(my_url, my_pk){
+
+var icm_url = mybase + my_url;
+if ($("#"+my_pk).attr('checked') == 'checked'){ 
+runCommandTWO('read mol "' +icm_url + '" name="' + my_pk.toString()+'"');
+runCommandTWO('display a_'+my_pk.toString()+'. skin');
+}
+else{
+runCommandTWO('delete a_'+my_pk.toString()+'.');
+
+}
+};
+function open_mol_new(my_pk){
+
+var my_url = '{% url 'Viewer:loader' %}?function=VIEWMOLPK&choice=' + my_pk.toString();
+var my_pk = 'll_disp__' + my_pk.toString();
+open_mol(my_url, my_pk)
+
+}
+function open_mol_newTWO(my_pk){
+
+var my_url = '{% url 'Viewer:loader' %}?function=VIEWMOLPK&choice=' + my_pk.toString();
+var my_pk = 'll_disp__' + my_pk.toString();
+open_molTWO(my_url, my_pk)
+
+}
+function get_mols_div(url_string, div_id, method){
+
+// Hard code these in for now - then pass them in via a drop down later
+var num_samps = 5
+url_string += "?METHOD="+method+"&NUM_SAMPS="+num_samps.toString()+"&DIV_ID="+div_id;
+document.getElementById(div_id).innerHTML= ''
+
+var out_html = '<table class="table table-striped table-hover "> <thead> <tr> <th>Molecule</th> <th>Show</th></tr> </thead> <tbody>'
+
+
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   if(data == "NO MATCH"){
+   out_html = "NO MATCH FOUND"
+   }
+   else{
+	   tot_data = $.parseJSON(data);
+	   mol_data = tot_data["MOLS"];
+	// Now loop through this and make the dive elements
+	   for (var i=0;i<mol_data.length;i++){
+	    if(tot_data["DIV_ID"]=="mol_inspect_two"){
+	    out_html += '<tr id="'+mol_data[i][0].toString()+'__ROW" ><td><img src="{% url 'Viewer:loader' %}?function=VIEWCMPDPK&choice='+mol_data[i][0].toString()+'"></img></td><td><label><input type="checkbox" onClick="open_mol_newTWO('+mol_data[i][2].toString()+')";'
+}
+else{
+	    out_html += '<tr id="'+mol_data[i][0].toString()+'__ROW" ><td><img src="{% url 'Viewer:loader' %}?function=VIEWCMPDPK&choice='+mol_data[i][0].toString()+'"></img></td><td><label><input type="checkbox" onClick="open_mol_new('+mol_data[i][2].toString()+')";'
+}
+	    out_html += '  id="ll_disp__'+mol_data[i][2].toString()+'" value="'+mol_data[i][0].toString()+'"></label></td></tr>'
+	  	}
+  	}
+  	out_html += '</tbody></table>';
+  	// Now update the HTML of this element
+  	document.getElementById(tot_data["DIV_ID"]).innerHTML= out_html
+  })
+};
+
+
+
+
+function download_mols(url_string, method){
+// Function to download mols given a URL
+num_samps = 5
+url_string += "?METHOD="+method+"&NUM_SAMPS="+num_samps.toString()+"&NO_TO_PICK="+my_num;
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+blob = new Blob([data], {type: "text/text"});
+saveAs(blob ,method + ".sdf")
+
+})
+
+
+
+};
+
+
+function go_to_mols(url_string, method){
+num_samps = 5
+url_string += "?METHOD="+method+"&NUM_SAMPS="+num_samps.toString()+"&NO_TO_PICK="+my_num;
+var re_dir_url = "{% url 'WONKA:Summarise' target_id %}?ALT_MOLS=";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+// Now go this URL
+data = $.parseJSON(data);
+re_dir_url += data
+window.open(re_dir_url,'_blank');
+
+})
+
+};
+
+
+function get_mols(url_string){
+
+get_mols_div(url_string, "mol_inspect", my_mol);
+get_mols_div(url_string, "mol_inspect_two", my_mol_2);
+}
+
+
+var my_map = "";
+var my_type = "";
+var my_map_2 = "";
+var my_mol = "";
+var my_mol_2 = "";
+var my_num = "";
+function set_map(map){
+my_map = map;
+
+document.getElementById("MAP_DIV").innerHTML=map;
+}
+
+
+
+function set_mol(map){
+my_mol = map;
+document.getElementById("MOL_DIV_ONE").innerHTML=map;
+
+};
+
+function set_num(num){
+my_num = num;
+document.getElementById("NUM_DIV_ONE").innerHTML=num;
+
+};
+
+
+
+function set_mol_two(map){
+my_mol_2 = map;
+
+document.getElementById("MOL_DIV_TWO").innerHTML=map;
+
+
+};
+function set_map_two(map){
+
+my_map_2 = map;
+
+document.getElementById("MAP_DIV_TWO").innerHTML=map;
+
+
+};
+
+function set_type(type){
+
+my_type = type;
+document.getElementById("TYPE_DIV").innerHTML=type;
+
+
+};
+
+
+function get_maps(url_string){
+
+if(my_map=="" || my_type==""){
+alert("Must specify map");
+
+}
+else{
+	var method_comp =  "RANDOM";
+	new_string = mybase + url_string + "?METHOD_ID="+my_map+"&TYPE_ID="+my_type+"&METHOD_COMP="+method_comp+"&TYPE_COMP="+my_type
+	
+	runCommand('delete a_COMPMAP.');
+	
+	runCommand('read pdb "'+new_string+'" name="COMPMAP"');
+	
+	runCommand('display a_COMPMAP. xstick');
+	runCommand('color a_COMPMAP./*/* Bfactor(a_COMPMAP./*/*) window=0.//5.')
+	
+	
+	new_string = mybase + url_string + "?METHOD_ID="+my_map_2+"&TYPE_ID="+my_type+"&METHOD_COMP="+method_comp+"&TYPE_COMP="+my_type
+	
+		runCommandTWO('delete a_COMPMAP.');
+	
+		runCommandTWO('read pdb "'+new_string+'" name="COMPMAP"');
+	
+		runCommandTWO('display a_COMPMAP. xstick');
+		runCommandTWO('color a_COMPMAP./*/* Bfactor(a_COMPMAP./*/*)')	
+	
+
+	}
+}
+
+function loadmymolpk(my_pk){
+var my_url = mybase+"{% url 'Viewer:loader' %}?function=VIEWMOLPK&choice="+my_pk;
+
+runCommand("read mol '"+my_url+"' name='my_mol'");
+runCommand("display a_my_mol. xstick");
+
+}
+</script>
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container-fluid">
+<div id="spacer" class="col-lg-12"><br/></div>
+	  <div id="ICM-container-two" class="col-lg-4">
+	  		    <div class="panel panel-primary">
+			  <div class="panel-heading">
+			    <h3 class="panel-title">MAP ONE</h3>
+			  </div>
+			  <div id="MAP_DIV" class="panel-body">
+			    NONE GIVEN
+			  </div>
+			</div>	 
+	  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:700px; margin-top: 10px;" id="ActiveIcmCtl">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="transparent" name="wmode">
+	  <param value="1" name="group">
+	</object>
+	<p></p>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White display</a>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');">Dark display</a>
+    <a class="btn btn-sm btn-warning" onclick="runCommand('undisplay a_{{p_code}}.* xstick; display a_{{p_code}}.* skin');">Surface</a>
+    <a class="btn btn-sm btn-info" onclick="runCommand('undisplay a_{{p_code}}.* skin; display a_{{p_code}}.* xstick');">Stick</a>
+    <a class="btn btn-sm btn-info" onclick="loadmymolpk('{{m_pk}}');">Show Mol</a>
+    <a class="btn btn-sm btn-info" onclick="runCommand('delete a_my_mol.')">Hide Mol</a>
+	</div>
+	  <div id="ICM-container" class="col-lg-4">
+			<div class="panel panel-primary">
+			  <div class="panel-heading">
+			    <h3 class="panel-title">MAP TWO</h3>
+			  </div>
+			  <div id="MAP_DIV_TWO" class="panel-body">
+			    NONE GIVEN
+			  </div>
+			</div>
+	  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:700px; margin-top: 10px;" id="ActiveIcmCtlTWO">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="transparent" name="wmode">
+	  <param value="1" name="group">
+
+	</object>
+	<p></p>
+    <a class="btn btn-sm btn-default" onclick="runCommandTWO('color background rgb={255,255,255}');">White display</a>
+    <a class="btn btn-sm btn-default" onclick="runCommandTWO('color background rgb={0,0,0}');">Dark display</a>
+    <a class="btn btn-sm btn-warning" onclick="runCommandTWO('undisplay a_{{p_code}}. xstick; display a_{{p_code}}.* skin');">Surface</a>
+    <a class="btn btn-sm btn-info" onclick="runCommandTWO('undisplay a_{{p_code}}. skin; display a_{{p_code}}.* xstick');">Stick</a>
+	</div>
+	<div class="col-lg-4"  id="opt-container">
+            <h2 id="nav-tabs">Controls</h2>
+            <div class="bs-component">
+             <ul class="nav nav-tabs">
+                <li class="active"><a data-toggle="tab" href="#home" aria-expanded="true">Conformations</a></li>
+                <li class=""><a data-toggle="tab" href="#profile" aria-expanded="false">Compare Maps</a></li>
+                <li class=""><a data-toggle="tab" href="#libraries" aria-expanded="false">DOWNLOAD</a></li>
+                <li class=""><a data-toggle="tab" href="#analysis" aria-expanded="false">Analysis</a></li>
+                <li class=""><a data-toggle="tab" href="#graphs" aria-expanded="false">Graphs</a></li>                               
+              </ul>
+             <div class="tab-content" id="myTabContent">
+              <div id="home" class="tab-pane fade active in" style="max-height:600px;overflow:scroll">
+                <table class="table table-striped table-hover ">
+                <thead>
+                  <tr>
+                    <th>Molecule</th>
+                    <th>Select</th>
+                    <th>Shape</th>
+                    <th>RMSD</th>
+                    <th>Clash</th>
+                    <th>Select</th>
+                    <th>Shape</th>
+                    <th>RMSD</th>
+                    <th>Clash</th>
+                  </tr>
+                </thead>
+                <tbody>
+	            {% for key, values in cmpd_dict.items %}
+	              <tr id="{{  key|urlencode }}__ROW" >
+                    <td>
+					  	<img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{  key|urlencode }}"></img>
+					 </td>
+					  	{% for value in values %}
+					 <td>
+					  <label>
+				        <input type="checkbox" onClick="open_mol('{% url 'Viewer:loader' %}?function=VIEWMOLPK&choice={{  value.mol_id.pk }}', 'll_conf__{{value.pk}}')"; id="ll_conf__{{value.pk}}" value="{{value.pk}}">
+				      </label>
+				    </td>
+				    
+				     <td>{{  value.shape_dist|floatformat}} </td>
+				     <td>{{  value.rmsd|floatformat}} </td>
+				     <td>{{  value.clash|floatformat}} </td>
+					  	{% endfor %}
+					  </div>
+					  </tr>
+	                  {% endfor %}
+	                  </tbody>
+	              </table>
+	         </div>
+	        <div id="profile" class="tab-pane fade">
+	        	<div class="btn-group">
+                    <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      MAP ONE
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for map in  methods %}
+                      <li><a onClick=set_map("{{map}}")>{{map}}</a></li>
+                      {% endfor %}
+                     </ul>
+                  </div>
+	        	<div class="btn-group">
+                    <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      MAP TWO
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for map in  methods %}
+                      <li><a onClick=set_map_two("{{map}}")>{{map}}</a></li>
+                      {% endfor %}
+                     </ul>
+                  </div>
+	        	<div class="btn-group">
+                    <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      TYPE
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for type in  types %}
+                      <li><a onClick=set_type("{{type}}")>{{type}}</a></li>
+                      {% endfor %}
+                     </ul>
+                  </div>
+
+	         {% for r in ra_id %}
+				<a class="btn btn-default" onClick=get_maps("{% url 'LLOOMMPPAA:CompareMaps' r %}")>ANALYSE</a>
+		    {% endfor %}
+		    <div class="panel panel-primary">
+			  <div class="panel-heading">
+			    <h3 class="panel-title">FEATURE</h3>
+			  </div>
+			  <div id="TYPE_DIV" class="panel-body">
+			    NONE GIVEN
+			  </div>
+			</div>
+	    
+            </div>
+	        <div id="libraries" class="tab-pane fade">
+	          <div class="col-lg-12">
+	         	<div class="btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      TYPE
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for map in  methods %}
+                      <li><a onClick=set_mol("{{map}}")>{{map}}</a></li>
+                      {% endfor %}
+                     </ul>
+               </div>
+	         	<div class="btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      NUMBER
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for num in numbers %}
+                      <li><a onClick=set_num("{{num}}")>{{num}}</a></li>
+                      {% endfor %}
+                     </ul>
+               </div>
+           {% for r in ra_id %}
+				<a class="btn btn-default" onClick="download_mols('{% url 'LLOOMMPPAA:get_mol_sdf' r %}', my_mol)">DOWNLOAD</a>
+				<a class="btn btn-default" onClick="go_to_mols('{% url 'LLOOMMPPAA:get_mol_ids' r %}', my_mol)">GO TO THEM</a>
+		   {% endfor %}
+		   
+		    </div>
+		    <div class="col-lg-12">
+			    <div class="panel panel-primary">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">METHOD</h3>
+				  </div>
+				  <div id="MOL_DIV_ONE" class="panel-body">
+				    NONE GIVEN
+				  </div>
+				</div>	        	       
+	 			<div class="panel panel-primary">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">NUMBER</h3>
+				  </div>
+				  <div id="NUM_DIV_ONE" class="panel-body">
+				    NONE GIVEN
+				  </div>
+				</div>	        
+	         </div>
+	        </div>
+            <div id="analysis" class="tab-pane fade">
+            {% for r in ra_id %}
+				<img style="width:100%;" src="{% url 'LLOOMMPPAA:MakeDendrogram' r %}"></img>
+		    {% endfor %}
+             </div>
+            <div id="graphs" class="tab-pane fade">
+ <div id="chartdiv"></div>
+             </div>                         
+            
+            </div>
+          </div>
+	</div>
+  </div>
+</div>
+</body>
+</html> 

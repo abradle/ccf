@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "OOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/bootstrap.min.js" %}"></script>
+  <script>
+  var browser = "other";
+		var isplugin = false;
+    	$(document).ready(function() {
+    	isplugin = isIcmPluginEnabled();
+    	if (browser == "msie") {
+    	// We cannot reliably tell with IE so leave this out
+    	}
+    	else if (isplugin==false){
+    	document.getElementById("mygetstarted").setAttribute("class","btn btn-lg btn-success disabled");
+    	document.getElementById("skiptut").setAttribute("class","btn btn-lg btn-warning disabled");
+    	document.getElementById("skiptut2").setAttribute("class","btn btn-lg btn-default dropdown-toggle disabled");
+    	document.getElementById("noICMdiv").style.display="";
+		};
+    	}
+    	)
+  </script>
+  
+  
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+   <title>OOMMPPAA: Home </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+      <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'OOMMPPAA:index'%}" class="navbar-brand">OOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1" href="{% url 'OOMMPPAA:viewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="{% url 'OOMMPPAA:demoviewer' 2 %}">Demo</a>
+            </li>
+             <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+                               <li><a tabindex="-1"href="https://bitbucket.org/abradley/oommppaa/downloads/Setup.exe">Windows</a></li>
+                               <li class="divider"></li>
+                               <li><a tabindex="-1"href="https://bitbucket.org/abradley/oommppaa/src">Source</a></li>
+                            </ul>
+            </li>
+            
+          </ul>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="jumbotron">
+      <h1>OOMMPPAA</h1>
+        <div class="lead">
+          <p>Directed synthesis and data analysis tool</p>
+        </div>
+ 	  </div>
+ 	   <div class="row">
+          <div class="col-lg-10">
+            <h2 id="nav-tabs">OOMMPPAA</h2>
+            <div class="bs-example">
+              <ul class="nav nav-tabs" style="margin-bottom: 15px;">
+                <li class="active"><a href="#home" data-toggle="tab">Home</a></li>
+                <li class=""><a href="#online" data-toggle="tab">Try online</a></li>
+                <li class=""><a href="#offline" data-toggle="tab">Install</a></li>
+                <li class=""><a href="#features" data-toggle="tab">Features</a></li>
+                <li class=""><a href="#profile" data-toggle="tab">Profile</a></li>
+			  </ul>
+              <div id="myTabContent" class="tab-content">
+                <div class="tab-pane fade active in" id="home">
+                  <p>OOMMPPAA is  a novel computational tool designed to inform compound design by combining structural and activity data.
+                  OOMMPPAA uses 3D matched molecular pairs to contextualise both activity and inactivity data in its relevant protein environment.
+                  It then identifies pharmacophoric transformations between pairs of compounds and associates them with their relevant activity changes.
+                  OOMMPPAA presents this data in an interactive application providing the user with a visual summary of important interactions in the context of the binding site.</p>
+        <p><strong>Online:</strong> you can try out the functionality using openly available CDK2 data</p>
+        <p><strong>Offline:</strong> for using your own datasets we have developed standalone executables. The inputs are (A) a file of complexed ligands, and (B) activity data.
+        The output is a 3D display of all pharmacophoric changes between molecules.</p>
+        <p>This work is based on the following paper in submission:</p>
+        <ul>
+            <li><a class="textlink" href="#"
+            target="_blank">Anthony R. Bradley, Ian D. Wall, Darren V.S. Green, Charlotte M. Deane, Brian D. Marsden (2014). OOMMPPAA: A tool to aid directed synthesis by the combined analysis of activity and structural data</a></li>
+        </ul></p>
+                </div>
+                <div class="tab-pane fade" id="profile">
+                  <p>I am a DPhil candidate at the University of Oxford. I work between the Structural Genomics Consortium (SGC) and the Oxford Protein Informatics Group (OPIG) for short.</p>
+                  <p>I am sponsored by GlaxoSmithKline and work with their Computational and Structural Chemistry department, developing tools to improve data analysis.</p>
+                  <p>Contact me at <a href="mailto:oommppaa.help@gmail.com"> oommppaa.help@gmail.com</a>, or view my webpage at <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a> </p>
+                </div>
+                <div class="tab-pane fade" id="online">
+	                  <p>You require the ActiveICM plugin</p>
+	                  <h3>Windows:</h3>
+	                  <p>Download <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&amp;act=mirror&amp;platform=windows&amp;ver=1.2-0">the package here</a><p>
+	                  <p>64 bit IE requires <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=mirror&platform=win64&ver=1.2-0">this EXTRA package</a></p>
+	                  <h3>Linux:</h3>
+	                  <p><strong>NOTE that gtkglext package is required.</strong> <a href="http://www.molsoft.com/install-acticm-linux.html"> Instructions here </a></p>
+	                  <p>64 bit download <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=mirror&platform=linux64&ver=1.2-0">the package here</a><p>
+	                  <p>32  bit download <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=mirror&platform=linux&ver=1.2-0">the package here</a><p> 
+ 					  <p>Install instructions <a href="http://www.molsoft.com/install-acticm-linux.html">here</a><p> 	                  
+ 					  <h3>MacOSX:</h3>
+	                  <p> Mac download <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=mirror&platform=macCA&ver=1.2-0">the package here</a><p>
+	                  <p>Any poblems e-mail the mailing list: oommppaa.help@gmail.com </p>
+                       <center>
+					          <a id="mygetstarted" href="{% url 'OOMMPPAA:demoviewer' 2 %}" class="btn btn-lg btn-success">Get Started</a>
+					            <a id="skiptut" href="{% url 'OOMMPPAA:viewer' 2 %}" type="button" class="btn btn-lg btn-warning">Skip tutorial</a>
+					            <div id="noICMdiv" class="panel panel-danger" style="margin-top:10px;display:none">
+					              <div class="panel-heading">
+					                <h3 class="panel-title">Warning no ICM plugin detected</h3>
+					              </div>
+					              <div class="panel-body">
+					                You do not currently have the ActiveICM plugin. Go <strong><a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=list">HERE</a></strong> to download it. You need it for the tool to work.
+					              </div>
+					            </div>
+					 	  <center>
+                	      <img id="ICM-png" style="width:100%" src="{% static "OOMMPPAA/browsers.png" %}">
+                
+                </div>
+                <div class="tab-pane fade" id="features">
+                <h2>Interactive and responsive UI</h2>
+					<p>We have built an interactive and simple UI for OOMMPPAA to aid non-experts in using the tool. Just have a go!
+					OOMMPPAA is built on the twitter bootstrap web framework, meaning it will look beautiful on any screen.</p>
+                <h2>Use your own data</h2>
+                <p>We have gone to great lengths to make the tool easy to install for your own use. Install the software and run it on your own data.
+                </p>    
+                <h2>Cross-platform</h2>
+                	<p>Because OOMMPPAA is written in python, it is cross-platform. We have installed OOMMPPAA on Mac, Windows and Linux.
+                	Use our wikis to help you out.</p>
+                <h2>No dependencies required</h2>
+                	<p>We have made a one click installer for Windows users. No need to install python or any modules.
+                	Also no need to worry about module version conflicts, OOMMPPAA comes completely self-contained.
+                	A mac equivelant is in the pipeline.</p>  
+                <h2>Scalable for departmental use</h2>
+                	<p>OOMMPPAA is based on Django, which is designed for scalable use. We give full instructions in setting up a robust 
+                	stack, using modern web-technologies (nginx, gunicorn and django).</p>
+                </div>
+                <div class="tab-pane fade" id="offline">
+                  <p>You can install OOMMPPAA on your own machine. This allows the tool to be used on your own data and without being connected to the internet.</p>
+                  <p>Any poblems e-mail the mailng list: <a href="mailto:oommppaa.help@gmail.com">oommppaa.help@gmail.com</a></p>
+                  <h3> Windows</h3>
+                  We have developed a windows installer for one click access and NO depednecies.
+                  <ul>
+	                  <li>Download the <a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&amp;act=mirror&amp;platform=windows&amp;ver=1.2-0">Active ICM</a> plugin</li>
+	                  <li>Download and run the <a href=https://bitbucket.org/abradley/oommppaa/downloads/Setup.exe>installer (XP and Windows 7) </a></li>
+	                  <li> Launch OOMMPPAA</li>
+	                  <li> More detailed instructions can be found on the <a href="https://bitbucket.org/abradley/oommppaa/wiki/Setting%20up%20on%20Windows">Wiki</a>.</li>
+                  </ul>
+                  <h3>Linux</h3>
+                  <ul>
+                  <li>OOMMPPAA has been installed and tested from source on linux</li>
+                  <li>Full instructions for installing on Ubuntu Linux 12.04 LTS are available <a href="https://bitbucket.org/abradley/oommppaa/wiki/Ubuntu">in this Wiki</a></p>
+                  <li>Instructions include those for making a robust NGINX, gunicorn, Django stack for site-wide use are shown <a href="https://bitbucket.org/abradley/oommppaa/wiki/Ubuntu%20server">in this Wiki</a></li>
+                  </ul>
+                  <h3>MacOSX</h3>
+                  <ul>
+                  <li>OOMMPPAA has been intalled and tested from source on MacOSX</li<>
+                  <li>Full instructions for installing on Mac can be found here<a href="https://bitbucket.org/abradley/oommppaa/wiki/MacOSX"> in this Wiki</a></li>
+                  </ul>
+                  <center>
+                  <a id="mysource" href="https://bitbucket.org/abradley/oommppaa/" class="btn btn-lg btn-success">Bitbucket</a>
+                  <a id="mywindows" href="https://bitbucket.org/abradley/oommppaa/downloads/Setup.exe" class="btn btn-lg btn-success">Windows</a>
+                  </center>
+                  <img id="ICM-png" style="width:100%" src="{% static "OOMMPPAA/os.png" %}">
+                </div>
+                
+              </div>
+            </div>
+          </div>
+ 	  </div>
+	<center>
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Made by <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a>. Contact him at <a href="mailto:oommppaa.help@gmail.com"> oommppaa.help@gmail.com</a>.</p>
+            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+          </div>
+        </div>
+      </footer>
+       </center>
+  </body>
+ </html>

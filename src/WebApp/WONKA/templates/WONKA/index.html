@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "WONKA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "WONKA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+    <script src="{% static "OOMMPPAA/isotope.min.js" %}"></script>
+  
+      <script src="{% static "OOMMPPAA/spin.js" %}"></script>
+ <script src="{% static "WONKA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "WONKA/nprogress.css" %}'/>   
+  <script>
+
+function gototarget(target_id){
+my_url = "{% url 'WONKA:Summarise' 0 %}".replace("/0/","/"+target_id+"/")
+//alert(my_url)
+document.getElementById("loading_box").innerHTML = "Please wait while the target data is loaded...."
+try {
+document.getElementById("register").style.display = "none";
+document.getElementById("login").style.display = "none";
+}
+catch(err){
+
+}
+document.location.href = my_url;
+};
+
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+    	isplugin = isIcmPluginEnabled();
+    	if (isplugin==false){
+    	document.getElementById("mygetstarted").setAttribute("class","btn btn-lg btn-success disabled");
+    	document.getElementById("skiptut").setAttribute("class","btn btn-lg btn-warning disabled");
+    	document.getElementById("skiptut2").setAttribute("class","btn btn-lg btn-default dropdown-toggle disabled");
+    	document.getElementById("noICMdiv").style.display="";
+		};
+    	}
+    	)
+
+
+var spin_opts = {
+  lines: 13, // The number of lines to draw
+  length: 20, // The length of each line
+  width: 10, // The line thickness
+  radius: 30, // The radius of the inner circle
+  corners: 1, // Corner roundness (0..1)
+  rotate: 0, // The rotation offset
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  color: '#000', // #rgb or #rrggbb or array of colors
+  speed: 1, // Rounds per second
+  trail: 60, // Afterglow percentage
+  shadow: false, // Whether to render a shadow
+  hwaccel: false, // Whether to use hardware acceleration
+  className: 'spinner', // The CSS class to assign to the spinner
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  top: '50%', // Top position relative to parent
+  left: '50%' // Left position relative to parent
+};
+   	
+function register(){
+  
+var my_j = {}
+my_j["FirstName"] = document.getElementById('inputFirstName').value
+my_j["LastName"] = document.getElementById('inputLastName').value
+my_j["EMail"] = document.getElementById('inputEMail').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+if(document.getElementById('inputPassword').value==document.getElementById('inputConfPassword').value){
+
+my_j["Password"] = document.getElementById('inputPassword').value
+}
+else{
+alert("Passwords don't match!");
+return
+}
+
+
+
+
+var URL = "{% url 'WONKA:register_user' %}";
+var spinner = new Spinner(spin_opts).spin(document.getElementById("LOGIN"));
+    $.post(URL, my_j, function(response){
+if(response=="success"){
+
+location.reload();
+
+}
+else{
+alert(response);
+}
+
+ });
+  
+  }
+  
+function login(){
+  
+var my_j = {}
+my_j["EMail"] = document.getElementById('inputEMailLOG').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+my_j["Password"] = document.getElementById('inputPasswordLOG').value
+
+
+
+
+
+var URL = "{% url 'WONKA:login_user' %}";
+
+
+
+
+
+  var spinner = new Spinner(spin_opts).spin(document.getElementById("LOGIN"));
+
+ $.post(URL, my_j, function(response){
+	if(response=="success"){
+
+		location.reload();
+
+	}
+else{
+alert(response)
+	}
+
+ });
+  
+  }
+
+
+var glob_pk = 0;
+
+function clust_me(){
+var my_url = "{% url 'WONKA:SplitSet' 1 %}".replace("/1/", "/" + glob_pk.toString() + "/")
+alert("THIS WILL OPEN A COMPOUND CLUSTERING FOR THIS TARGET")
+window.open(my_url, '_blank');
+
+
+}
+function sum_me(){
+var my_url = "{% url 'WONKA:Summarise' 1 %}".replace("/1/", "/" + glob_pk.toString() + "/")
+alert("THIS WILL OPEN A TARGET SUMMARY FOR THIS TARGET - PLEASE BE PATIENT...")
+window.open(my_url, '_blank');
+
+}
+
+function warning_me(my_pk){
+ 
+ document.getElementById("warning_div").style.display="";
+
+glob_pk = my_pk;
+
+
+}
+
+function seen_mol(mol_pk, targ_name){
+
+
+var my_url = "{% url 'WONKA:seen_mol' %}?user_pk="+user_pk.toString()+"&mol_pk="+mol_pk.toString();
+
+$.ajax({
+  url: my_url,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function(data){
+
+	my_j = $.parseJSON(data);
+	mol_pk = my_j["mol_pk"];
+// Now remove this guy from the block
+	my_id ="#mol"+mol_pk.toString();
+	$(my_id).addClass("false");
+	my_id ="molseen"+mol_pk.toString();
+	document.getElementById(my_id).style.display = "none"
+	$container.isotope('reloadItems')
+   $container.isotope({ filter: '.target, .'+targ_name+':not(.false)' })
+})
+
+
+
+};
+
+
+function subscribe_me(do_it, target_id){
+var my_url = ""
+var my_html = ""
+var my_id = "#subscr"+target_id.toString()
+if (do_it==true){
+my_url = "{% url 'WONKA:subscribe_targ' 0 0 %}";
+
+  my_html = "Unsubscribe"
+
+}
+else{
+my_url = "{% url 'WONKA:unsubscribe_targ' 0 0 %}";
+
+  my_html = "Subscribe"
+
+}
+my_url = my_url.replace("/0/", "/" + target_id.toString() + "/")
+my_url = my_url.replace("/0/", "/" + user_pk.toString() + "/")
+$.ajax({
+  url: my_url,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function(data){
+
+	$(my_id).toggleClass("btn-success");
+	$(my_id).toggleClass("btn-danger");
+	$(my_id).html(my_html);
+	$(my_id).attr("onclick","subscribe_me("+ !do_it + "," + target_id.toString() + ")");
+
+	
+
+})
+
+}
+
+
+
+
+{% if user.is_authenticated %}
+
+var user_pk = {{ user.pk }};
+
+
+function user_data(){
+// Get this new URL
+my_url = "{% url 'WONKA:get_user_info' user.pk %}";
+$.ajax({
+  url: my_url,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+    
+  }
+}).done(function(data){
+
+	my_j = $.parseJSON(data);
+// Get all the targets
+	targs = my_j["targs"]
+	mols = my_j["mols"]
+
+// Get the fave ones for this user
+	out_h = "";
+	// 
+	for (var i = 0; i < targs.length; i++) {
+	if (targs[i]["cool"]==true){
+  	out_h += '<div class="alert alert-dismissable alert-info subsribed item target '+targs[i]["target"]+' '+targs[i]["new"]+'">'
+  	}
+  	else{
+  	 
+  	out_h += '<div class="alert alert-dismissable alert-info item unsubsribed target '+targs[i]["target"]+' '+targs[i]["new"]+'">'
+  	
+  	}
+  	out_h += '<h3 class="col-lg-12">'+targs[i]["name"]+'</h3>'
+  	// Now put in the target info for this guy
+  	out_h += '<div class="hidden col-lg-12">'
+  	out_h += '<p>New molecules: '+targs[i]["tot_new"]+'</p>'
+  	out_h += '<p>All molecules: '+targs[i]["mols"]+'</p>'  	
+  	out_h += '<p>Activity points: '+targs[i]["acts"]+'</p>'
+   	out_h += '<a onclick="$container.isotope({ filter: '+"'.target, ."+targs[i]["name"]+"'"+' })"  class="btn btn-sm btn-info" >All mols</a>'
+    out_h += '<a onclick="$container.isotope({ filter: '+"'.target, ."+targs[i]["name"]+":not(.false)'"+' })"  class="btn btn-sm btn-info" >New mols</a>'
+   	out_h += '<a onclick="$container.isotope({ filter: '+"'.target '"+' })"  class="btn btn-sm btn-info" >Hide mols</a>'
+   	sum_url = "{% url 'WONKA:Summarise' 2 %}".replace("/2/", "/" + targs[i]["pk"] + "/" )
+   	split_url = "{% url 'WONKA:SplitSet' 2 %}".replace("/2/", "/" + targs[i]["pk"] + "/")
+   	obs_url = "{% url 'WONKA:ShowObservations' 2 %}".replace("/2/", "/" + targs[i]["pk"] + "/") 	
+   	if(targs[i]["mols"] > 80){
+   	out_h += '<a target="_blank" onclick="warning_me('+targs[i]["pk"].toString()+')"  class="btn btn-md btn-warning" >Summarise</a>'
+   	}
+   	else{
+   	out_h += '<a target="_blank" onclick="gototarget('+"'"+targs[i]["pk"]+"'"+')"  class="btn btn-md btn-warning" >Summarise</a>'
+   	}
+   	if (targs[i]["cool"]==false){
+   	   	out_h += '<a id="subscr'+ targs[i]["pk"].toString() +'" onclick="subscribe_me(true,' + targs[i]["pk"].toString() +');"  class="btn btn-sm btn-success" >Subscribe</a>'
+   	
+   	}
+   	else{
+   	   	out_h += '<a id="subscr'+ targs[i]["pk"].toString() +'" onclick="subscribe_me(false,' + targs[i]["pk"].toString() +')"  class="btn btn-sm btn-danger" >Unsubscribe</a>'
+   	
+   	}
+   	
+   	
+   	out_h += '<a target="_blank" href="'+split_url+'"  class="btn btn-md btn-success" >Cluster</a>'
+    out_h +=	'<a target="_blank" href="'+obs_url+'"  class="btn btn-md btn-warning" >Observations</a>'
+
+
+
+  	out_h += '</div>'
+  	
+  	
+  	out_h +='</div>'
+	};
+	for (var i = 0; i < mols.length; i++) { 
+
+  	out_h += '<div id="mol'+mols[i]["pk"].toString()+'" class="alert alert-dismissable alert-success molecule '+mols[i]["target"]+' item '+mols[i]["new"]+'">'
+  	out_h += '<img syle="width:100%"src="{% url 'Viewer:loader' %}?function=VIEWCMPDPK&choice='+mols[i]["cmpd_pk"].toString()+'"></img>'
+  	// Now put in the target info for this guy
+  	out_h += '<div class="hidden col-lg-12">'
+
+  	//like_url = {% url 'WONKA:get_user_info' 2 %}.replace("/2/", "/"+  +"/")
+  	if (mols[i]["new"]==true){
+   	out_h += '<a id="molseen'+mols[i]["pk"].toString()+'" onclick="seen_mol('+mols[i]["pk"].toString()+', '+"'"+mols[i]["target"]+"'"+')"  class="btn btn-sm btn-info" >Seen mol</a>'
+  	}
+  	//out_h += '<a onclick="seen_mol('+mols[i]["pk"].toString()+', '+"'"+mols[i]["target"]+"'"+')"  class="btn btn-sm btn-info" >Go to mol</a>'
+  	out_h += '</div>'
+
+  	out_h += '</div>'
+
+	};
+	
+	$("#data-sorter").html(out_h);
+
+	$container = $('#data-sorter').isotope({
+	        getSortData: { },
+	        layoutMode: 'fitRows'
+	        })
+$container.on( 'click', '.item', function() {
+  $(this).toggleClass('col-lg-3');
+  $.each($(this).children("div"), function(index, ele){
+  $(ele).toggleClass('hidden');
+    $container.isotope('layout');
+  }
+  )
+});
+	$container.isotope({ filter: '.target' })
+});
+}
+
+$(document).ready(function(){user_data()})
+
+{% endif %}
+
+  </script>
+
+<style>
+
+.hidden {
+
+display:none;
+
+}
+</style> 
+ 
+  
+  <link rel="stylesheet" href="{% static "WONKA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "WONKA/icon.ico" %}" type="image/x-icon">
+   <title>WONKA: Home </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'WONKA:index'%}" class="navbar-brand">WONKA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button> 
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1" onclick="gototarget('{{Target.id}}')">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/wonka/wiki/Home">Bitbucket</a></li>
+			    </ul>
+            </li>
+
+                      <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+                      </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="jumbotron">
+      <h1>WONKA</h1>
+        <div class="lead">
+          <p>Data analysis and interrogation tool</p>
+        </div>
+ 	  </div>
+
+     <div>
+       <center>
+ 	{% if user.is_authenticated %}
+    <h3 id="loading_box">Welcome, {{ user.first_name }} {{ user.last_name }}! Pick a Target data set using the Targets menu at the top of this page </h3>
+    <div id="warning_div" style="display:none" class="alert alert-dismissable alert-danger">
+  <button type="button" class="close" data-dismiss="alert">x</button>
+  You have <strong>A LOT</strong> of molecules to look at here. I'd suggest  <strong><a onclick="clust_me()" class="alert-link">CLUSTERING...</a></strong> <p>If you still want to <a onclick="sum_me()" class="alert-link">CLICK HERE </a></p>
+</div>
+		<div class="row">
+		          <div id="data-sorter" class="col-lg-12">
+		          </div>
+		     </div>
+            <a href="{% url 'WONKA:logout_user' %}" class="btn btn-sm btn-success">Logout</a>
+            <div id="noICMdiv" class="panel panel-danger" style="margin-top:10px;display:none">
+              <div class="panel-heading">
+                <h3 class="panel-title">Warning no ICM plugin detected</h3>
+              </div>
+              <div class="panel-body">
+                You do not currently have the activeICM plugin. Go <strong><a href="http://www.molsoft.com/getbrowser.cgi?product=activeicm&act=list">HERE</a></strong> to download it. You need it for the tool to work.
+              </div>
+            </div>
+ 	  </div>
+ 	  <br></br>
+{% else %}
+<div id="my_log">
+
+    <h1 id="loading_box" class="col-xs-8 col-lg-4" >Welcome to WONKA. Please log in...</h1>
+     <div style="display:none" id="register" class="col-xs-8 col-lg-4" >
+    <div class="form-group">
+        <label for="inputFirstName">First Name</label>
+        <input type="First Name" class="form-control" id="inputFirstName" placeholder="First Name">
+    </div>
+    <div class="form-group">
+        <label for="inputLastName">Last Name</label>
+        <input type="Last Name" class="form-control" id="inputLastName" placeholder="Last Name">
+    </div>
+    <div class="form-group">
+        <label for="inputEMail">E-mail</label>
+        <input type="E-Mail" class="form-control" id="inputEMail" placeholder="E-mail">
+    </div>
+    <div class="form-group">
+        <label for="inputPassword">Password</label>
+        <input type="Password" class="form-control" id="inputPassword" placeholder="Password"">
+    </div>
+    <div class="form-group">
+        <label for="inputConfPassword">Confirm Password</label>
+        <input type="Password" class="form-control" id="inputConfPassword" placeholder="Confirm Password"">
+    </div>
+    <a onclick="register();" class="btn btn-lg btn-success">Register</a>
+     <a onclick="document.getElementById('register').style.display='none';document.getElementById('login').style.display=''" class="btn btn-lg  btn-warning">Or click here to login!</a>
+	</div>
+	 	 <div id="login" class="col-xs-8 col-lg-4" >
+
+    <div class="form-group">
+        <label for="inputEMailLOG">E-mail</label>
+        <input type="E-Mail" class="form-control" id="inputEMailLOG" placeholder="E-mail">
+    </div>
+    <div class="form-group">
+        <label for="inputPasswordLOG">Password</label>
+        <input type="Password"" class="form-control" id="inputPasswordLOG" placeholder="Password"">
+    </div>
+    <a onclick="login();" class="btn btn-lg btn-success">Login</a>
+    <a onclick="document.getElementById('register').style.display='';document.getElementById('login').style.display='none'" class="btn btn-lg  btn-warning">Click here to register</a>
+	</div>
+
+</div>
+	{% endif %}
+ 	 <center>
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Made by <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a>. Contact him at <a href="mailto:anthony.bradley@worc.ox.ac.uk">anthony.bradley@worc.ox.ac.uk</a>.</p>
+            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+            <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+          </div>
+        </div>
+      </footer>
+       </center>
+       
+
+  </body>
+ </html>

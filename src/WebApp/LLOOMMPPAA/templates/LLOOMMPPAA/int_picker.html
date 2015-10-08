@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/d3.min.js" %}"></script>
+    <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+ <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/> 
+  <script src="{% static "LLOOMMPPAA/venn.min.js" %}"></script>
+      <script src="{% static "OOMMPPAA/spin.js" %}"></script>
+
+  <script>
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+    	isplugin = isIcmPluginEnabled();
+    	if (isplugin==false){
+    	document.getElementById("mygetstarted").setAttribute("class","btn btn-lg btn-success disabled");
+    	document.getElementById("skiptut").setAttribute("class","btn btn-lg btn-warning disabled");
+    	document.getElementById("skiptut2").setAttribute("class","btn btn-lg btn-default dropdown-toggle disabled");
+    	document.getElementById("noICMdiv").style.display="";
+		};
+    	}
+    	)
+var opts = {
+  lines: 13, // The number of lines to draw
+  length: 20, // The length of each line
+  width: 10, // The line thickness
+  radius: 30, // The radius of the inner circle
+  corners: 1, // Corner roundness (0..1)
+  rotate: 0, // The rotation offset
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  color: '#000', // #rgb or #rrggbb or array of colors
+  speed: 1, // Rounds per second
+  trail: 60, // Afterglow percentage
+  shadow: false, // Whether to render a shadow
+  hwaccel: false, // Whether to use hardware acceleration
+  className: 'spinner', // The CSS class to assign to the spinner
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  top: '50%', // Top position relative to parent
+  left: '50%' // Left position relative to parent
+};
+
+window.onload = function() {
+loadmyprot('{{ target.prot }}')
+var url_string = "{% url 'LLOOMMPPAA:res_finder' target_id %}";
+var res_div = "res_div";
+
+var res_url = "{% url 'LLOOMMPPAA:cmpd_picker'  2 %}";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function( data ) {
+	var my_j = $.parseJSON(data);
+	// Now go through this data and fill in the residues 
+	for (i = 0; i < my_j["my_res"].length; i++) { 
+	//alert(my_j["my_res"][i]);
+	var res_num = my_j["my_res"][i]["res_num"]
+	var res_name = my_j["my_res"][i]["res_name"];
+	var res_pk = my_j["my_res"][i]["pk"];
+	var icm_id =  my_j["my_res"][i]["icm_id"];
+	// So now get the URL for 
+	var my_url = res_url.replace("/2/", "/" + res_pk.toString() + "/");
+	$('<a/>', {
+    //href: my_url,
+ // Add extra information
+ 	style: "cursor:pointer",
+    onclick: "runCommand('center a_./"+icm_id+" ');runCommand('undisplay a_./* cpk');runCommand('display a_./"+icm_id+" cpk');",//load_cmpd_div('"+my_url+"');",
+    text: res_name,
+    
+}).appendTo("#"+res_div);
+	$("#"+res_div).append(" ")
+	}
+	
+
+	})
+
+} 
+  </script>
+  
+  
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+   <title>LLOOMMPPAA: Home </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+    		<div class="row">
+    		<br></br>
+    		</div>
+		<div class="row">
+			<div id="example" class="col-lg-12">
+			  
+			</div>
+		</div>
+		<div class="row>
+			<div class="col-lg-12" id="res_div">
+				
+			</div>	  
+			<div class="col-lg-12">
+				<div id="ICM-box">
+				    <div>
+					  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:600px; margin: 0 !important;" id="ActiveIcmCtl">
+					  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+					  <param value="transparent" name="wmode">
+					</object>
+					<p></p>
+					    <center>
+					    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White</a>
+					    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');">Dark</a>
+					    <a style="margin-left:0px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.Title}}TEMP. ');">Protein off</a>
+					    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.prot }}. xstick');runCommand('display a_{{ target.prot }}. ribbon');runCommand('display a_{{ target.prot }}. skin');">Surface</a>
+					    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.prot }}. skin');runCommand('display a_{{ target.prot }}. xstick');">Stick</a>
+					    <a id="mmprembutt" style="display:none" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+				     	</center>
+					</div>
+				</div>
+			</div>
+		</div>
+		 	<center>
+		      <footer>
+		        <div class="row">
+		          <div class="col-lg-12">
+		            <p>Made by <a href="http://www.dtc.ox.ac.uk/people/11/bradley/">Anthony Bradley</a>. Contact him at <a href="mailto:anthony.bradley@worc.ox.ac.uk">anthony.bradley@worc.ox.ac.uk</a>.</p>
+		            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+		            <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+		          </div>
+		        </div>
+		     </footer>
+		   </center>
+    </div>
+  </body>
+ </html>

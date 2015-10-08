@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "WONKA/filesaver.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+   <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/> 
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">  
+   <title>LLOOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+
+<script>
+function download_mols(url_string, method){
+// Function to download mols given a URL
+num_samps = 5
+url_string += "?METHOD="+method+"&NUM_SAMPS="+num_samps.toString()+"&NO_TO_PICK="+my_num;
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+blob = new Blob([data], {type: "text/text"});
+saveAs(blob ,method + ".sdf")
+
+})
+
+
+
+};
+
+
+function go_to_mols(url_string, method){
+num_samps = 5
+url_string += "?FILTER=RING&METHOD="+method+"&NUM_SAMPS="+num_samps.toString()+"&NO_TO_PICK="+my_num;
+var re_dir_url = "{% url 'WONKA:Summarise' target_id %}?method="+method+"&ALT_MOLS=";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+// Now go this URL
+data = $.parseJSON(data);
+re_dir_url += data
+window.open(re_dir_url,'_blank');
+
+})
+
+};
+
+
+
+var my_map = "";
+var my_type = "";
+var my_map_2 = "";
+var my_mol = "PLIFS_default";
+var my_mol_2 = "";
+var my_num = "10";
+
+
+function set_mol(map){
+my_mol = map;
+document.getElementById("MOL_DIV_ONE").innerHTML=map;
+
+};
+
+function set_num(num){
+my_num = num;
+document.getElementById("NUM_DIV_ONE").innerHTML=num;
+
+};
+
+</script>
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container-fluid">
+            <div class="col-lg-12"><br></br></div>
+            <div class="col-lg-12">
+	 			<div class="panel  col-lg-4 panel-primary">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">NUMBER</h3>
+				  </div>
+				  <div id="NUM_DIV_ONE" class="panel-body">
+				    10
+				  </div>
+				</div>
+              <div class="col-lg-2 btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      NUMBER
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for num in numbers %}
+                      <li><a onClick=set_num("{{num}}")>{{num}}</a></li>
+                      {% endfor %}
+                     </ul></div>
+	 			<div class="panel col-lg-4 panel-primary">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">TYPE</h3>
+				  </div>
+				  <div id="MOL_DIV_ONE" class="panel-body">
+				    PLIFS_default
+				  </div>
+				</div>
+				    <div class="col-lg-2 btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                      TYPE
+                      <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for map in  methods %}
+                      <li><a onClick=set_mol("{{map}}")>{{map}}</a></li>
+                      {% endfor %}
+                     </ul>
+               </div>
+
+			</div>
+			<table class="table table-striped table-hover ">
+                <thead>
+                  <tr>
+                    <th>Molecule</th>
+                    <th>Fragment</th>     
+                    <th>Reaction</th>                 
+                    <th>Stage</th>                 
+                    <th>Completion</th>                    
+                    <th>Analyse in WONKA</th>
+                    <th>Pick</th>
+                    <th>Full Analysis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in JOBS %}
+                  <tr >
+                    <td><img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{ job.mol_id.smiles|urlencode }}"></img></td>
+                    <td><img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{ job.context|urlencode }}"></img></td>     
+                    <td>{{ job.react_id.name }}</td>                 
+                    <td>{{ job.proc_stage }}</td>                 
+                    <td>{{ job.stage_completion }}</td>
+
+		    	</div>
+                    <td>
+                    {% if job.proc_stage == "COMPLETE" %}
+	                    {% for d_item in job.runanalysis_set.all %}
+	                         <a class="btn btn-default" onClick="go_to_mols('{% url 'LLOOMMPPAA:get_mol_ids'  d_item.pk %}', my_mol)">View structures in WONKA</a>
+	                    {% endfor %}
+	                {% else %}
+	                    <a class="btn btn-danger" href="{% url 'LLOOMMPPAA:CheckProgress' job.pk %}">STILL PROCESSING.... GO TO PROGRESS</a>
+                    {% endif %}
+                    </td>
+                    <td>
+                    {% if job.proc_stage == "COMPLETE" %}
+	                    {% for d_item in job.runanalysis_set.all %}
+	                         <a class="btn btn-default" onClick="download_mols('{% url 'LLOOMMPPAA:get_mol_sdf' d_item.pk %}', my_mol)">Download SDF</a>
+	                    {% endfor %}
+	                {% else %}
+	                    <a class="btn btn-danger" href="{% url 'LLOOMMPPAA:CheckProgress' job.pk %}">STILL PROCESSING.... GO TO PROGRESS</a>
+                    {% endif %}
+                    </td>
+                    <td>
+                    {% if job.proc_stage == "COMPLETE" %}
+	                    {% for d_item in job.runanalysis_set.all %}
+	                         <a class="btn btn-default" href="{% url 'LLOOMMPPAA:FollowUpReview' job.pk %}">Full analysis page</a>
+	                    {% endfor %}
+	                {% else %}
+	                    <a class="btn btn-danger" href="{% url 'LLOOMMPPAA:CheckProgress' job.pk %}">STILL PROCESSING.... GO TO PROGRESS</a>
+                    {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+</div>
+
+</div>
+</div>
+</body>
+</html>

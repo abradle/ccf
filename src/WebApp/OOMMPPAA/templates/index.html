@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "OOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/bootstrap.min.js" %}"></script>
+  </head>
+  <center>
+    <a style="margin-top:200px;" href="{% url 'WONKA:index' %}" class="btn btn-lg btn-success">Browse Structural Data - WONKA</a>
+    <a style="margin-top:200px;" href="{% url 'OOMMPPAA:index' %}" class="btn btn-lg btn-info">Browse Activity Data - OOMMPPAA</a>
+  </center>
+</html>

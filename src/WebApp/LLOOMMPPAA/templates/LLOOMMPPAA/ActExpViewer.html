@@ -1,0 +1,84 @@
+{% load staticfiles %}
+<script src="{% static "MMPMaker/Three49custom.js" %}"></script>
+<script src="{% static "MMPMaker/jquery-1.7.min.js" %}"></script>
+<script src="{% static "MMPMaker/GLmol.js" %}"></script>
+<script src="{% static "MMPMaker/ICM_funs.js" %}"></script>
+<script>
+
+$( "#mymolcanv" ).load(function() {
+
+alert("LOADED")
+});
+
+
+var target_id = '{{ target.id }}';
+
+function fillme(urlstring){
+
+if (urlstring=="hello"){
+var my_src = '{% static "MMPMaker/spinner.gif" %}';
+//document.getElementById('mymolspin').style.visibility='visible';
+//document.getElementById('mymolcanv').style.visibility='hidden';
+}
+else{
+document.getElementById('mymolcanv').src = urlstring;
+//document.getElementById('mymolcanv').style.visibility = 'visible';
+//document.getElementById('mymolspin').style.visibility = 'hidden';
+};
+
+};
+
+</script>
+
+{% if target %}
+	<p>{{ target.Title }}</p>
+{% else %}
+    <p>No target available.</p>
+{% endif %}
+
+{% if cmps %}
+	<div style="float:left;max-height:900px; overflow-y:scroll;"">
+	{% for comp in cmps %}
+	    <input type="checkbox" id="choicecmp{{ forloop.counter }}" value="{{ comp.pk }}" onclick="loadmymmp('{{comp.pk }}',{{ forloop.counter }})" />
+	    <label for="choice{{ forloop.counter }}">{{ comp.TITLE }}</label><br/>
+	{% endfor %}
+	</div>
+{% else %}
+    <p>No functions available.</p>
+{% endif %}
+{% if proteins %}
+	<div style="float:left;max-height:900px; overflow-y:scroll;"">
+	{% for protein in proteins %}
+	    <input type="checkbox" id="choice{{ forloop.counter }}" value="{{ protein }}" onclick="loadprot('{{protein }}',{{ forloop.counter }})" />
+	    <input type="checkbox" id="choicemol{{ forloop.counter }}" value="{{ protein }}" onclick="loadmol('{{protein }}',{{ forloop.counter }})" />
+	    <label for="choice{{ forloop.counter }}">{{ protein }}</label><br/>
+	{% endfor %}
+	</div>
+{% endif %}
+{% if maps %}
+	{% for map in maps %}
+		<div style="float:left;max-height:900px; "">
+			<input type="checkbox" id="choice{{map.Type }}" value="{{ map.pk }}" onclick="loadpdb('{{map.Type}}','{{ map.pk }}')" />
+			<label for="choice{{map.Type }}">{{ map.Type }}</label><br/>
+		</div>
+	{% endfor %}
+	</div>
+	<div style="float:left;max-height:900px;"">
+		<input type="button" id="asgr" value="SHOW" onclick="findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }},{{ maps.3.pk }}')" />
+		<label for="asgr"></label><br/>
+	</div>
+	<div style="float:left;max-height:900px;"">
+		<input type="button" id="asgr1" value="FIND POINTS" onclick="findexps('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }},{{ maps.3.pk }}')" />
+		<label for="asgr1"></label><br/>
+	</div>
+{% endif %}
+<br></br>
+<div style="float:left;">
+<object type="application/x-molsoft-icb" style="width: 1000px; height:800px; margin: 0 !important;" id="ActiveIcmCtl">
+<param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+<param value="transparent" name="wmode">
+</object> </div>
+
+<div id="mymoldiv" style="width: 400px; height:800px;float:left;overflow-y:scroll;">
+<img src="#" id="mymolcanv" alt="some_text">
+</div>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "WONKA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script type="{% static "WONKA/jquery-latest.js" %}"></script> 
+  <script type="{% static "WONKA/jquery.tablesorter.js" %}"></script> 
+  <script src="{% static "WONKA/bootstrap.min.js" %}"></script>
+  <script type="{% static "WONKA/jquery.tablesorter.js" %}"></script> 
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">
+    <script type="text/javascript" src="http://www.amcharts.com/lib/3/amcharts.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/radar.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/serial.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/none.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/chalk.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/light.js"></script>
+  
+   <title>WONKA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+   
+<style>.modal-dialog{
+position: absolute;
+left: 50%;
+//now you must set a margin left under zero - value is a half width your window
+margin-left: -312px;
+// this same situation is with height - example
+height: 800px;
+top: 10%;
+
+} 
+
+.carousel-control {
+  padding-top:10%;
+  width:5%;
+}
+</style>
+
+
+<script>
+
+function show_mol(pdb_code, on_switch){
+// Molecule to take a smiles and a pk to fill a mol on click
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+
+if (on_switch==true){
+
+runCommand('delete a_'+pdb_code+'*. ');
+
+
+}
+
+else{
+runCommand('read mol "'+url_string+'"');
+runCommand("display a_*. wire");
+
+};
+
+
+}
+function show_mol_check(pdb_code, div_name, colour){
+// Molecule to take a smiles and a pk to fill a mol on click
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+
+if ($('#'+div_name).is(':checked')){
+runCommand('read mol "'+url_string+'" name="'+div_name+'mol"');
+runCommand("display a_"+ div_name +"mol. xstick");
+runCommand("color a_"+ div_name +"mol.//c* "+colour);
+
+
+}
+
+else{
+runCommand('delete a_'+ div_name +'mol. ');
+
+};
+
+
+}
+
+
+var ph4_opt = "Standard";
+var loadmymolold = "";
+var target_id = {{ target.pk }};
+var target_name= '{{ target.title }}';
+function loadmymol(){
+// javascript function to run when loading molecular images
+pdb_code = document.getElementById('pdbin').value;
+if(pdb_code == loadmymolold){
+// Don't submit the same request twice
+  var me=1;
+}
+else{
+// Delete an existing molecule
+runCommand('GRAPHICS.l_redraw = no');
+runCommand('delete a_.* &! a_act.* &! a_inact.* &! a_shape.* &! a_{{ target.title }}TEMP.* ');
+runCommand('GRAPHICS.l_redraw = yes');
+runCommand('display new');
+// Reset the catch variable
+loadmymolold = pdb_code;
+// load the macro, wait two seconds for this to finish
+var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+runCommand('call "'+mynewurl+'"');
+// First make a call to see what it is (PDB code, valid smiles or not either -> returns None or PDB code either way)
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=CHECKMOL&target={{  target.pk }}';
+var me = "";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+  // Get the code back
+   pdb_code = data;
+   if(pdb_code=="None molecule"){
+     
+     document.getElementById('mynewcanv3-error').style.display="";
+   }
+   else{
+     document.getElementById('mynewcanv3-error').style.display="none";
+  // Now make the actual request for the molecule
+   var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+   runCommand('read mol "'+url_string+'"');
+   runCommand('display a_.* &! a_act.* &! a_inact.* &! a_shape.* wire');
+   // And for the image
+   var url_string_new =mybase+'/WONKA/ScoreMol/?target='+target_id+'&code='+pdb_code+'&opt=d'
+   filltable(url_string_new,'frag-table');
+   var url_string_new =mybase+'/WONKA/ScoreMol/?target='+target_id+'&code='+pdb_code+'&opt=ph4';
+   filltable(url_string_new,'ph4-table');
+    }
+  })
+}
+}
+
+
+function filltable(url_string,div_name){
+
+            $("#"+div_name).tablesorter(); 
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+  response = $.parseJSON(data);
+  $(function() {
+    $.each(response, function(i, item) {
+        var my_score = item.score.toFixed(2);
+        $('<tr>').append(
+            
+            $('<td>').text(my_score),
+            $('<td>').text(item.type)
+        ).appendTo('#'+div_name);
+
+        
+    });
+  });  
+  
+  
+  
+  })
+
+}
+
+
+function updateMap(){
+// function to update the activiy maps
+
+var myMaps=new Array();
+var myPks =new Array();
+runCommand('deleteObjs "star" Atom(a_act.)');
+runCommand('deleteObjs "cube" Atom(a_inact.)');
+runCommand('deleteObjs "doublepyramid" Atom(a_non.)');
+{% for map in maps %}
+myMaps[{{ forloop.counter0 }}] = '{{map.Type}}'
+myPks[{{ forloop.counter0 }}] = {{ map.pk }}
+{% endfor %}
+
+for (var i=0;i<myMaps.length;i++)
+	{
+	if ($('#choice'+myMaps[i]+'blah').is(':checked'))
+		{
+		loadpdblight(myMaps[i],myPks[i])
+		};
+	};
+};
+
+function maxAct(log){
+           if (log==0){  
+           var ht = String($(window).height()*0.8)+"px"
+           document.getElementById('act-container').style.height=ht;
+           document.getElementById('maxactbutt').style.display="none";
+           document.getElementById('minactbutt').style.display="";
+           }
+           else if(log==1){
+           document.getElementById('act-container').style.height="";
+           document.getElementById('maxactbutt').style.display="";
+           document.getElementById('minactbutt').style.display="none";
+           }
+};
+
+function maxICM(log){
+
+// Function to control the size of the ICM window. Should go in ICM_funs.js eventually
+    		// undisplay all the divs
+    		
+    		var mydivs = new Array('ICM','maps','sliders','act','im','im2');
+
+    		
+			if(log==0){    		
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='none';
+			}
+			document.getElementById('ICM-box').setAttribute("class","col-lg-12");
+			var wt = String($(window).width())+"px"
+			var ht = String($(window).height()*0.8)+"px"
+            document.getElementById('ActiveIcmCtl').style.height=ht;
+            document.getElementById('ActiveIcmCtl').style.width=wt;
+            document.getElementById('tot-container').style.marginLeft="20px";
+            document.getElementById('tot-container').style.marginRight="20px";
+            //.margin-left="10px";
+            document.getElementById('minbutt').style.display="";
+            document.getElementById('maxbutt').style.display="none";
+            document.getElementById('mmpdispbutt').style.display="";
+            document.getElementById('mmprembutt').style.display="";
+            document.getElementById('ICM-png').style.display="none";
+            var ht = String($(window).height()*0.8)+"px"
+			var wt = String($(window).width()*0.3)+"px"        
+            
+            }
+            else if(log==1)
+            {
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='';
+			}
+			document.getElementById('ICM-png').style.display="";
+			document.getElementById('ICM-box').setAttribute("class","col-lg-6");
+            document.getElementById('ActiveIcmCtl').style.height='450px';
+            document.getElementById('ActiveIcmCtl').style.width='100%';
+            document.getElementById('tot-container').style.marginLeft="";
+            document.getElementById('tot-container').style.marginRight="";
+            document.getElementById('minbutt').style.display="none";
+            document.getElementById('maxbutt').style.display="";   
+            document.getElementById('mmpdispbutt').style.display="none";
+            document.getElementById('mmprembutt').style.display="none";        
+            
+            }
+};
+var ht = String($(window).height()*0.8)+"px"
+			
+
+
+function  letsshape2(shape){
+// function to put  shapes into the ICM viewer
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	runCommand('read binary "'+myurl+'" name="'+shape+'"')
+	runCommand('undisplay '+shape)
+};
+
+    
+window.onload = function()
+                {
+                
+
+ 	// load the macro
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+    runCommand('call "'+mynewurl+'"');
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+	runCommand('call "'+mynewurl+'"');
+	// Now load in the shapes
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	letsshape2('star');
+	letsshape2('cube');
+};
+ $(function(){
+    $("[data-hide]").on("click", function(){
+        $("." + $(this).attr("data-hide")).hide();
+        // -or-, see below
+        // $(this).closest("." + $(this).attr("data-hide")).hide();
+    });
+});
+var spinner = '{% static "OOMMPPAA/spinner.gif" %}'
+    	$(document).ready(function() {
+
+            var spinurl = mybase+spinner;
+            var img = document.createElement("IMG");
+            img.src = spinurl;     		
+	    	/* Make sliders */
+	        $("#confs").slider({});
+	        $("#conserved").slider({});
+	        $("#pharma").slider({});
+	        $("#redgraph").slider({});
+	        setTimeout(function(){
+	        // Load the protein
+	        loadmyprot('{{ target.title }}TEMP')
+	        // Now set the view
+	        runCommand('display a_*TEMP. ribbon');
+	        // Load in any ligand for this target and centre on this ligand
+            var mol_string = mybase+'/Viewer/loader/?choice={{ target.mol }}&function=VIEWMOL';
+            runCommand('read mol "'+mol_string+'" name="{{ target.mol }}mol"');
+            runCommand('display a_{{ target.mol }}*.* wire');
+            runCommand('center a_{{ target.mol }}*.* ');
+            runCommand('undisplay a_{{ target.mol }}*.* wire');
+
+	        },2000)
+    	});
+    	
+$(document).keypress(function(event) {
+	
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if (keycode == '13') {
+        event.preventDefault();
+        $('#searchbutt').click();
+    }
+});
+
+
+
+function show_res(res_name,div_name,my_colour){
+
+   if ($('#'+div_name).is(':checked')){
+   
+   runCommand('display a_./'+res_name+' cpk');
+   runCommand('color a_.//c* & a_./'+res_name+' '+my_colour);
+   
+   }
+   
+   else{
+   runCommand('color a_.//c* & a_./'+res_name+' white');
+   runCommand('display a_./'+res_name+' xstick');
+   runCommand('undisplay a_./'+res_name+' cpk');   
+   }
+
+
+};
+
+
+function centre_res(res_name){
+
+
+   runCommand('center a_./'+res_name);
+
+
+
+};
+
+
+function re_select_data(){
+	runCommand('delete my_var');
+	runCommand('my_var = String(Box())');
+	var my_var = getVar('my_var').replace(/ /g,'');
+	url_string = mybase+'/WONKA/{{  target.pk  }}/Summarise/?map='+my_var;
+	window.open(url_string, '_blank');
+}
+function show_mol_prot(url,div_name,my_colour){
+
+   if ($('#'+div_name).is(':checked')){
+var my_s = 'read pdb "'+url+'" name="'+div_name+'"';
+
+runCommand(my_s);
+runCommand('display a_'+div_name+'. cpk');
+runCommand('color a_'+div_name+'. '+my_colour);
+}
+
+else{
+       runCommand('delete a_'+div_name+'*. ');
+      };
+}
+
+
+function show_mol_frags(pdb_code){
+var url_string =mybase+'/WONKA/ScoreMol/?target={{  target.pk }}&code='+pdb_code+'&opt=frag'
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function(data){
+  
+    response = $.parseJSON(data);
+  
+  
+  $(function() {
+   var HTML_out = "";
+    $.each(response, function(i, item) {
+        var my_score = item.score.toFixed(2);
+
+            
+            HTML_out += '<img src="/Viewer/loader/?function=2DMOL&choice='+item.type+'" style="width:40%"></img>'
+
+
+        
+    });
+    
+    
+    $('#ph4-container').innerHTML = HTML_out;
+  
+ 
+  
+  })
+})
+};
+
+
+
+
+
+function show_one(div_name, class_name, show_class){
+var my_class = '.'+class_name;
+var my_div = '#'+div_name+"-div"
+
+var class_div = $(my_class);
+var all_but_one = $(my_class).not(my_div);
+
+$(my_class).show();
+
+$(my_class).not(my_div).hide();
+
+$(".top-show").each(function(){
+
+// Uncheck everything
+if ($(this).is(':checked')){
+    $(this).click();
+    $(this).click().attr('checked', false);
+    }
+});
+
+
+
+// Check what we want to check
+$("."+show_class).each(function(){
+    $(this).click();
+    $(this).click().attr('checked', true);
+});
+
+
+}
+
+
+
+</script>
+
+
+
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'WONKA:index'%}" class="navbar-brand">WONKA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'WONKA:Summarise' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+          </ul>
+          <form class="navbar-form navbar-left">
+            <input id="pdbin" type="text" class="form-control col-lg-8" placeholder="Input SMILES or code">
+          </form>
+          <ul class="nav navbar-nav">
+            <li>
+              <a  id="searchbutt" 
+              class="btn btn-sm btn-primary" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Search for this PDB id or SMILES" onclick="loadmymol();">Search</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-left">
+            <li><a>{{ target.title }}</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container">
+  <div class="row">
+  
+  
+    <div class="col-lg-12">
+		<p></p>
+        <a id="key-ph4-button" onclick="show_one('key-ph4','viewer-one','ph4-show')" class="btn btn-lg btn-danger" >Key Pharmacophores</a>
+        <a id="key-frag-button" onclick="show_one('key-frag','viewer-one','frag-show')" class="btn btn-lg btn-danger" >Key Motifs</a>
+        <a id="wie-feat-button" onclick="show_one('wie-feat','viewer-one','wie-show')" class="btn btn-lg btn-danger" >Rare features</a>
+        <a id="div-mol-button" onclick="show_one('div-mol','viewer-one')" class="btn btn-lg btn-danger" >Diverse Molecules</a>
+        <a id="div-mol-button" onclick="show_one('big-frag','viewer-one','big-show')" class="btn btn-lg btn-danger" >Big Motifs</a>
+        <a id="div-mol-button" onclick="show_one('max-res','viewer-one','res-show')" class="btn btn-lg btn-danger" >Residue Shifts</a>
+
+        <p></p>
+	</div>
+  </div>
+   <div class="row">
+
+	<div id="first-div" style="overflow-y:scroll;height:800px;"class="col-lg-3 well">  
+
+	   <div class="viewer-one"  style="display:none" id="key-frag-div">
+<h3>Key Motifs</h3>
+{% for mol in key_frag %}
+  
+  <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+  <div>
+  {{ mol.num }} %
+  <img src={{mol.src}} style="width:40%"></img>
+  </div>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="frag-show top-show" id="choice{{mol.pk}}key_frag1"; value="{{ mol.pk }}" onclick="show_mol_prot('{{mol.url_centre}}','choice{{mol.pk}}key_frag1','{{ mol.button }}')">
+                </label>
+              </div>
+              <a id="div-mol-button" onclick="show_one('usu-mol-frag-{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Haves</a>              
+              <a id="div-mol-button" onclick="show_one('wie-mol-frag-{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Have nots...</a>              
+    </div>
+{% endfor %}
+       </div>
+       
+ 
+ <div class="viewer-one"  style="display:none" id="big-frag-div">
+<h3> Large Motifs</h3>
+{% for mol in top_big_frags %}
+  
+  <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+  <div>
+  {{ mol.num }} %
+  <img src={{mol.src}} style="width:40%"></img>
+  </div>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="big-show top-show" id="choice{{mol.pk}}big_frag"; value="{{ mol.pk }}" onclick="show_mol_prot('{{mol.url_centre}}','choice{{mol.pk}}big_frag','{{ mol.button }}')">
+                </label>
+              </div>
+              <a id="div-mol-button" onclick="show_one('big-frag-{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Haves</a>   
+                  </div>
+{% endfor %}
+       </div>
+ 
+ 
+ 
+       
+	   <div class="viewer-one" style="display:none" id="key-ph4-div">
+
+<h3>Key Pharmacophores</h3>
+
+{% for mol in key_ph4 %}
+    <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+<p>{{ mol.smiles }} :  {{ mol.num }} %</p>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="ph4-show top-show" id="choice{{mol.pk}}ph4"; value="{{ mol.pk }}" onclick="show_mol_prot('{{mol.url_centre}}','choice{{mol.pk}}ph4','{{ mol.button }}')">
+                </label>
+              </div>
+             <a onclick="show_one('usu-mol-ph4-{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Haves</a>              
+             <a onclick="show_one('wie-mol-ph4{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Have nots...</a>              
+     </div>
+{% endfor %}
+       </div>
+
+
+<div class="viewer-one" style="display:none" id="max-res-div">
+
+<h3>Large residue shifts</h3>
+
+{% for mol in max_shift %}
+    <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+<p>{{ mol.res }} :  {{ mol.shift|floatformat:3 }} A RMSD </p>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="res-show top-show" id="choice{{ forloop.counter }}res"; value="{{ mol.pk }}" onclick="show_res('{{mol.res}}','choice{{ forloop.counter }}res','{{mol.button}}')">
+                </label>
+              </div>
+        <a onclick="centre_res('{{ mol.res }}')" class="btn btn-sm btn-info" >Centre</a>
+</div>
+{% endfor %}
+       </div>
+    
+  
+<div class="viewer-one" style="display:none" id="avg-res-div">
+
+<h3>Average residue shifts</h3>
+
+{% for mol in avg_shift %}
+    <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+<p>{{ mol.res }} :  {{ mol.shift|floatformat:3 }} A RMSD </p>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="avg-res-show top-show" id="choice{{ forloop.counter }}avgres"; value="{{ mol.pk }}" onclick="show_res('{{mol.res}}','choice{{ forloop.counter }}avgres','{{mol.button}}')">
+                </label>
+              </div>
+        
+</div>
+{% endfor %}
+       </div>
+       
+       
+       
+
+     
+ 	   <div class="viewer-one" style="display:none" id="wie-feat-div">
+
+<h3>Unusual Features</h3>
+
+{% for mol in wie_feat %}
+    <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+
+<p>{{ mol.smiles }} :  {{ mol.num }} </p>
+			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" class="wie-show top-show" id="choice{{mol.pk}}wie_feat1"; value="{{ mol.pk }}" onclick="show_mol_prot('{{mol.url_centre}}','choice{{mol.pk}}wie_feat1','{{ mol.button }}')">
+                </label>
+              </div>
+              <a onclick="show_one('wie-feat-ph4-{{ forloop.counter }}','viewer-two')" class="btn btn-sm btn-info" >Haves...</a>              
+     </div>     
+{% endfor %}
+       </div>
+       
+       
+        <div class="viewer-one" style="display:none" id="div-mol-div">
+        
+        <h3>Diverse set of molecules</h3>
+        
+{% for mol in div_mol %}
+  <div class="well" style="border-width: medium;border-color:{{ mol.bg }}">
+  
+  
+  <img src={{mol.src}} style="width:40%"></img>
+  <a style="margin-left:10px" class="btn btn-sm btn-{{ mol.button }}" onclick="">{{mol.function}}</a>
+			  <div style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}div_mol1"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}div_mol1','{{ mol.button }}')">
+                </label>
+              </div>
+   </div>
+{% endfor %}
+       </div>	
+       
+       
+    </div>	
+	
+	
+	<div id="ICM-box" class="col-lg-6">
+	  <div id="ICM-container">
+	  <object type="application/x-molsoft-icb" style="width: 100%; height:450px; margin: 0 !important;" id="ActiveIcmCtl">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="windowed" name="wmode">
+	</object>
+	<p></p>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Gives ICM a shiny white background" class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White display</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Undisplay the protein"  style="margin-left:10px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_1qmz*. ');runCommand('undisplay a_{{ target.title}}TEMP. ');">Protein off</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the protein as skin"  class="btn btn-sm btn-primary" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. wire');runCommand('display a_{{ target.title}}TEMP. ribbon');runCommand('display Sphere(a_*.m a_{{ target.title}}TEMP. 8) skin')">Surface</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the protein as stick and cartoon"  class="btn btn-sm btn-primary" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. skin');runCommand('display Sphere(a_*.m a_{{ target.title}}TEMP. 8) wire');runCommand('display a_{{ target.title}}TEMP. ribbon');">Stick</a>
+	<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show the compounds from the selected points" id="mmpdispbutt" style="margin-left:10px;display:none" onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Remove those compounds from the 3D display" id="mmprembutt" style="display:none" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+<a id="makeboxbut" onclick="runCommand('as_graph = a_{{ target.mol }}*. '); makeBox()" class="btn btn-sm btn-success">Display box</a>
+<a id="makeboxbut" onclick="re_select_data();" class="btn btn-sm btn-success">Search!!!</a>
+
+
+
+    </div>
+
+	</div>
+    
+    
+
+    <div id="mol-container" style="overflow-y:scroll;height:800px;"class="col-lg-3 well">
+         <h3>Related mols</h3>
+ 
+<div>
+
+{% for my_list in unusu_ph4_mol%}
+
+  {% for mol in my_list %}
+  <div id="wie-feat-ph4-{{forloop.parentloop.counter}}-div" class="viewer-two well" style="display:none;border-width: medium;border-color:{{ mol.bg }}">
+    <img src={{mol.src}} style="width:40%"></img>
+  			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}{{ mol.button}}wie_mol"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}{{mol.button}}wie_mol','{{ mol.button }}')">
+                </label>
+              </div>
+  </div>
+  {% endfor %}
+
+{% endfor %}
+       </div>  
+
+
+       <div>
+
+{% for my_list in usu_mol_frag%}
+
+  {% for mol in my_list %}
+  <div id="usu-mol-frag-{{forloop.parentloop.counter}}-div" class="viewer-two well" style="display:none;border-width: medium;border-color:{{ mol.bg }}">
+    <img src={{mol.src}} style="width:70%"></img>
+  			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}{{ mol.button}}usu_mol_frag"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}{{mol.button}}usu_mol_frag','{{ mol.button }}')">
+                </label>
+              </div>
+  </div>
+  {% endfor %}
+
+{% endfor %}
+       </div>  
+
+
+       <div>
+
+{% for my_list in usu_mol_ph4%}
+
+  {% for mol in my_list %}
+  <div id="usu-mol-ph4-{{forloop.parentloop.counter}}-div" class="viewer-two well" style="display:none;border-width: medium;border-color:{{ mol.bg }}">
+    <img src={{mol.src}} style="width:70%"></img>
+  			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}{{ mol.button}}usu_mol_ph4"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}{{mol.button}}usu_mol_ph4','{{ mol.button }}')">
+                </label>
+              </div>
+  </div>
+  {% endfor %}
+
+{% endfor %}
+       </div> 
+
+
+       <div>
+
+{% for my_list in wie_mol_frag %}
+
+  {% for mol in my_list %}
+  <div id="wie-mol-frag-{{forloop.parentloop.counter}}-div" class="viewer-two well" style="display:none;border-width: medium;border-color:{{ mol.bg }}">
+    <img src={{mol.src}} style="width:40%"></img>
+    <img src={{mol.close}} style="width:40%"></img>
+  			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}{{ mol.button}}wie_mol_frag"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}{{mol.button}}wie_mol_frag','{{ mol.button }}')">
+                </label>
+              </div>
+              
+  </div>
+  {% endfor %}
+
+{% endfor %}
+       </div>         
+
+<div>
+{% for my_list in wie_mol_ph4%}
+
+  {% for mol in my_list %}
+  <div id="wie-mol-ph4{{forloop.parentloop.counter}}-div" class="viewer-two well" style="display:none;border-width: medium;border-color:{{ mol.bg }}">
+    <img src={{mol.src}} style="width:70%"></img>
+  			  <div  style="display:inline-block" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{mol.pk}}{{ mol.button}}wie_mol"; value="{{ mol.pk }}" onclick="show_mol_check('{{mol.code}}','choice{{mol.pk}}{{mol.button}}wie_mol','{{ mol.button }}')">
+                </label>
+              </div>
+  </div>
+  {% endfor %}
+
+{% endfor %}
+       </div>      
+
+
+
+  </div>  
+  
+  
+</div>
+</body>
+</html> 

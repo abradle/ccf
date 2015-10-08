@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">  
+   <title>LLOOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+
+<script>
+// Function to show the fragments
+function show_frags(my_pk){
+
+var my_frag_url =  mybase + "{% url 'LLOOMMPPAA:get_sdf_info' 2 %}".replace("/2/", "/" + my_pk.toString() + "/")
+
+var my_cmd = "read mol '" + my_frag_url + "'";
+
+runCommand(my_cmd);
+runCommand("display a_FRAG*.* xstick");
+
+
+}
+$(document).ready(function() {
+
+     loadmyprot('{{ prot_code }}')
+     
+}
+)
+</script>
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container-fluid">
+<div id="spacer" class="col-lg-12"><br/></div>
+	  <div id="ICM-container" class="col-lg-7">
+	  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:700px; margin-top: 10px;" id="ActiveIcmCtl">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="transparent" name="wmode">
+	</object>
+	<p></p>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White display</a>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');">Dark display</a>
+    <a style="margin-left:10px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. ');">Protein off</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. xstick');runCommand('display a_{{ target.title}}TEMP. ribbon');runCommand('display a_{{ target.title}}TEMP. skin');">Surface</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. skin');runCommand('display a_{{ target.title}}TEMP. xstick');">Stick</a>
+	<a id="mmpdispbutt" style="margin-left:10px;display:none" onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+    <a id="mmprembutt" style="display:none" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+	<a id="undslig" style="margin-left:10px" class="btn btn-sm btn-info" onclick="runCommand('undisplay a_MYMOL*. xstick')">Undisplay Lig</a>
+	<a id="makeboxbut" onclick="makeBox()" class="btn btn-sm btn-success">Display box</a>
+	<a id="graphbut" style="" onclick="show_chart(my_obj.lloommchart,'lloommppaa',1.0);show_chart(my_obj.oochart,'oommppaa',1.0);show_chart(my_obj.chart,'xtal',1.0);show_chart(my_obj.llchart,'subset',sele_id);" class="btn btn-sm btn-info">Refresh Data</a>
+	<a id="maxbutt" style="margin-left:10px" class="btn btn-sm btn-info"  onclick="document.getElementById('allcharts').style.display='none';document.getElementById('minbutt').style.display='';document.getElementById('maxbutt').style.display='none';document.getElementById('ActiveIcmCtl').style.height='800px'">Max</a>
+	<a id="minbutt" style="display:none;margin-left:10px" class="btn btn-sm btn-warning"  onclick="document.getElementById('allcharts').style.display='';document.getElementById('minbutt').style.display='none';document.getElementById('maxbutt').style.display='';document.getElementById('ActiveIcmCtl').style.height='450px'">Min</a>
+	</div>
+	<div class="col-lg-5"  id="opt-container">
+			<table class="table table-striped table-hover ">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Smiles</th>
+                    <th>Frag one</th>
+                    <th>Replace frag one</th>
+                    <th>Frag two</th>
+                    <th>Replace frag two</th>
+                    <th>Show</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in poss_react %}
+                  <tr >
+                    <td>{{  item.pk  }}</td>						
+                    <td>{{  item.react_id.name }}</td>
+                    <td><img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{  item.mol_id.smiles|urlencode }}"></img></td>
+                    <td><img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{  item.retained_frag|urlencode }}"></img></td>
+                    <td><a target="_blank" class="btn btn-info" href="{% url 'LLOOMMPPAA:FollowUpFrag' item.pk 1 %}"></a></td>
+                    <td><img src="{% url 'Viewer:loader' %}?function=2DMOL&choice={{  item.replaced_frag|urlencode }}"></img></td>
+                    <td><a target="_blank" class="btn btn-info" href="{% url 'LLOOMMPPAA:FollowUpFrag' item.pk 2 %}"></a></td>
+                    <td><a class="btn btn-default" onclick="show_frags({{item.pk}})"></a></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+	</div>
+  </div>
+</div>
+</body>
+</html>

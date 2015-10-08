@@ -1,0 +1,17 @@
+GRAPHICS.l_redraw = no
+writer = FileWriter.new('C:\\Users\\abradley\\workspace\\PLIFS\\pyplif\\myFirstFile.txt')
+for i = 1,Nof(mols)
+  rm a_.
+  dsChemLock_new "mols" "mols" i yes
+  s_name = Split(mols[i].NAME_[1],"_")[1]
+  s_f = "C:\\www\\Protoype\\media_coninchi\\pdb\\"+s_name+"al.pdb"
+  openFile s_f 0 yes no no no " append"
+  s_lig = "a_"+Replace(mols[i].NAME_[1],".","_")+".m"
+  s_prot = "a_"+s_name+"al."
+  m_res = Res(Sphere($s_lig $s_prot 5.))
+  for j = 1,Nof(m_res)
+    FileWriter.write(writer,String(m_res[j]))
+  endfor
+endfor
+FileWriter.flush(writer)
+FileWriter.close(writer)

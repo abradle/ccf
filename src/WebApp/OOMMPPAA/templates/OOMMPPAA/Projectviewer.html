@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "OOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/messi.css" %}"></script>
+    <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/messi.js" %}"></script>
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">
+   <title>OOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+   
+ <script>
+var loadmymolold = "";
+var target_id = {{ target.pk }};
+var target_name= '{{ target.title }}';
+
+
+function loadmymol(){
+// javascript function to run when loading molecular images
+pdb_code = document.getElementById('pdbin').value;
+if(pdb_code == loadmymolold){
+// Don't submit the same request twice
+  var me=1;
+}
+else{
+// Delete an existing molecule
+runCommand('GRAPHICS.l_redraw = no');
+runCommand('delete a_.* &! a_act.* &! a_inact.* &! a_shape.* &! a_{{ target.title }}TEMP.* ');
+runCommand('GRAPHICS.l_redraw = yes');
+runCommand('display new');
+
+// Reset the catch variable
+loadmymolold = pdb_code;
+// load the macro, wait two seconds for this to finish
+var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+runCommand('call "'+mynewurl+'"');
+// First make a call to see what it is (PDB code, valid smiles or not either -> returns None or PDB code either way)
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=CHECKMOL&target={{  target.pk }}';
+var me = "";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   pdb_code = data;
+   if(pdb_code=="None molecule"){
+     document.getElementById('mynewcanv-error').style.display="";
+     document.getElementById('mynewcanv3-error').style.display="";
+   }
+   else{
+     document.getElementById('mynewcanv-error').style.display="none";
+     document.getElementById('mynewcanv3-error').style.display="none";
+  // Now make the actual request for the molecule
+   var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+   runCommand('read mol "'+url_string+'"');
+   runCommand('display a_.* &! a_act.* &! a_inact.* &! a_shape.* xstick');
+   // And for the image
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=1&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv');
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=3&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv3');
+    }
+  })
+}
+}
+function updateMap(){
+// function to update the activiy maps
+var myMaps=new Array();
+var myPks =new Array();
+runCommand('deleteObjs "star" Atom(a_act.)');
+runCommand('deleteObjs "cube" Atom(a_inact.)');
+runCommand('deleteObjs "doublepyramid" Atom(a_non.)');
+{% for map in maps %}
+myMaps[{{ forloop.counter0 }}] = '{{map.Type}}'
+myPks[{{ forloop.counter0 }}] = {{ map.pk }}
+{% endfor %}
+
+for (var i=0;i<myMaps.length;i++)
+	{
+	if ($('#choice'+myMaps[i]+'blah').is(':checked'))
+		{
+		loadpdblight(myMaps[i],myPks[i])
+		};
+	};
+};
+
+function maxAct(log){
+           if (log==0){  
+           var ht = String($(window).height()*0.8)+"px"
+           document.getElementById('act-container').style.height=ht;
+           document.getElementById('maxactbutt').style.display="none";
+           document.getElementById('minactbutt').style.display="";
+           }
+           else if(log==1){
+           document.getElementById('act-container').style.height="";
+           document.getElementById('maxactbutt').style.display="";
+           document.getElementById('minactbutt').style.display="none";         
+           
+           }
+};
+
+function maxICM(log){
+
+// Function to control the size of the ICM window. Should go in ICM_funs.js eventually
+    		// undisplay all the divs
+    		
+    		var mydivs = new Array('ICM','maps','sliders','act','im','im2');
+
+    		
+			if(log==0){    		
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='none';
+			}
+			document.getElementById('ICM-box').setAttribute("class","col-lg-12");
+			var wt = String($(window).width())+"px"
+			var ht = String($(window).height()*0.8)+"px"
+            document.getElementById('ActiveIcmCtl').style.height=ht;
+            document.getElementById('ActiveIcmCtl').style.width=wt;
+            document.getElementById('tot-container').style.marginLeft="20px";
+            document.getElementById('tot-container').style.marginRight="20px";
+            document.getElementById('ICM-png').style.display="none";
+            //.margin-left="10px";
+            document.getElementById('minbutt').style.display="";
+            document.getElementById('maxbutt').style.display="none";
+            document.getElementById('mmpdispbutt').style.display="";
+            document.getElementById('mmprembutt').style.display="";
+            
+            var ht = String($(window).height()*0.8)+"px"
+			var wt = String($(window).width()*0.3)+"px"        
+            
+            }
+            else if(log==1)
+            {
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='';
+			}
+			document.getElementById('ICM-png').style.display="";
+			document.getElementById('ICM-box').setAttribute("class","col-lg-6");
+            document.getElementById('ActiveIcmCtl').style.height='450px';
+            document.getElementById('ActiveIcmCtl').style.width='100%';
+            document.getElementById('tot-container').style.marginLeft="";
+            document.getElementById('tot-container').style.marginRight="";
+            document.getElementById('minbutt').style.display="none";
+            document.getElementById('maxbutt').style.display="";   
+            document.getElementById('mmpdispbutt').style.display="none";
+            document.getElementById('mmprembutt').style.display="none";        
+            
+            }
+};var ht = String($(window).height()*0.8)+"px"
+			
+
+
+function  letsshape2(shape){
+// function to put  shapes into the ICM viewer
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	runCommand('read binary "'+myurl+'" name="'+shape+'"')
+	runCommand('undisplay '+shape)
+};
+
+window.onload = function()
+                {
+ 	// load the macro
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}"
+    runCommand('call "'+mynewurl+'"')
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+	runCommand('call "'+mynewurl+'"');
+	// Now load in the shapes
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	letsshape2('star');
+	letsshape2('cube');
+
+};
+ $(function(){
+    $("[data-hide]").on("click", function(){
+        $("." + $(this).attr("data-hide")).hide();
+        // -or-, see below
+        // $(this).closest("." + $(this).attr("data-hide")).hide();
+    });
+});
+var spinner = '{% static "OOMMPPAA/spinner.gif" %}'
+    	$(document).ready(function() {
+    		  var spinurl = mybase+spinner;
+              var img = document.createElement("IMG");
+              img.src = spinurl;     		
+	    	/* Make sliders */
+	        $("#pharm").slider({});
+	        $("#act").slider({});
+	        setTimeout(function()
+	        {
+			{% for altarget in altargets %}
+				loadmyprot('{{ altarget.title }}TEMP');
+				runCommand('color xstick a_{{ altarget.title }}TEMP.//c* {{ altarget.color }}');
+			{% endfor %}
+			
+			},
+			1000)
+    	});
+    	
+$(document).keypress(function(event) {
+	
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if (keycode == '13') {
+        event.preventDefault();
+        $('#searchbutt').click();
+    }
+});
+
+
+// Check OS
+var OSName="Unknown OS";
+if (navigator.appVersion.indexOf("Win")!=-1) OSName="Windows";
+if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
+if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
+if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
+
+</script>
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'OOMMPPAA:index'%}" class="navbar-brand">OOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'OOMMPPAA:viewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="{% url 'OOMMPPAA:ICMviewer' 2 %}">Help</a>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+          </ul>
+          <form class="navbar-form navbar-left">
+            <input id="pdbin" type="text" class="form-control col-lg-8" placeholder="Input SMILES or code">
+          </form>
+          <ul class="nav navbar-nav">
+            <li>
+              <a  id="searchbutt" 
+              class="btn btn-sm btn-primary" onclick="loadmymol();">Search</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container">
+  <div class="row">
+    <div class="col-lg-12">
+      <p></p> 
+	</div>
+  </div>
+   <div class="row">
+  	  <div class="col-lg-3"> 
+    	<div class="well" id="maps-container">
+		{% for map in maps %}
+			{% if map.Type == "act" %}
+			  <div style="margin-top:0px" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{map.Type}}blah"; value="{{ map.pk }}" onclick="loadpdblight('{{map.Type}}','{{ map.pk }}');"> Improving activity
+                </label>     
+              </div>
+			{% endif %}
+			{% if map.Type == "inact" %}
+			  <div class="checkbox">
+                <label>
+                <input type="checkbox" id="choice{{map.Type}}blah"; value="{{ map.pk }}" onclick="loadpdblight('{{map.Type}}','{{ map.pk }}');"> Reducing activity
+                </label>     
+              </div>
+			{% endif %}
+			{% if map.Type == "shape" %}
+			  <div style="margin-bottom:0px" class="checkbox">
+                <label>
+                <input  type="checkbox" id="choice{{map.Type}}blah"; value="{{ map.pk }}" onclick="loadpdblight('{{map.Type}}','{{ map.pk }}');"> All points
+                </label>     
+              </div>
+			{% endif %}
+		{% endfor %}
+		</div>
+		<div style="text-align:center"  class="well" id="sliders-container">
+        <p>Pharmacophoric changes: <b> 1</b>
+        <input id="pharm" type="text" class="span2" value="" data-slider-min="1" data-slider-max="8" data-slider-step="1" data-slider-value="[1,5]"/>
+        <b> 8</b><p>
+        <p>Activity change: <b> 1</b>
+        <input id="act" type="text" class="span2" value="" data-slider-min="0" data-slider-max="2" data-slider-step="0.1" data-slider-value="[0.8,1.5]"/>
+        <b> 2</b><p>
+        <a id="updatemapbut" onclick="updateMap();" class="btn btn-sm btn-success">Refresh</a>
+	    </div>
+	    <div class="well" id="im-container">
+	      <center>
+	        <p>Fit to activity and inactivity points </p>
+	        <div class="alert alert-dismissable alert-danger" style="display:none" id="mynewcanv-error">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. </strong> What you have entered is neither a valid pdb code nor a valid smiles string.</p>
+            </div>
+	        <div id="mynewcanv"></div>
+	      </center>
+	    </div>
+
+	 </div>
+	
+	<div id="ICM-box" class="col-lg-6">
+	 <div id="ICM-container">
+	  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:450px; margin: 0 !important;" id="ActiveIcmCtl">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="transparent" name="wmode">
+	</object>
+	<p></p>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White display</a>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');">Dark display</a>
+    <a style="margin-left:10px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. ');">Protein off</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. xstick');runCommand('display a_{{ target.title}}TEMP. skin');">Surface</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.title}}TEMP. skin');runCommand('display a_{{ target.title}}TEMP. xstick');">Stick</a>
+	<a id="maxbutt" style="margin-left:10px" class="btn btn-sm btn-info" onclick="maxICM(0);">Max</a>
+	<a id="mmpdispbutt" style="margin-left:10px;display:none" onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }},{{ maps.3.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+    <a id="mmprembutt" style="display:none" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+    <a id="minbutt" style="display:none;margin-left:10px" class="btn btn-sm btn-danger" onclick="maxICM(1);">Min</a>
+	</div>
+	<p></p>
+    <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+    <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+	</div>
+    <div id="act-container" style="overflow-y:scroll;height:325px;"class="col-lg-3 well">
+    <center>
+      <p>
+      <a onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }},{{ maps.3.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+      <a onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+      
+      </p>
+        <div id="MMPError" style="display:none" class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. You have not selected any points.</strong></p><p>Right-click and drag to select a point or points.</p>
+        </div>
+  	  <div style="margin-top:5px;margin-bottom:5px;" id="newmolcanv" ></div>
+  	  <a id="maxactbutt" onclick="maxAct(0);" class="btn btn-md btn-info">Max</a>
+  	  <a id="minactbutt" onclick="maxAct(1);" style="display:none" class="btn btn-md btn-info">Min</a>
+  	  </center>
+    </div>
+	    <div class="col-lg-3 well" id="im2-container">
+	      <center>
+	        <p>Pharmacophoric conservation </p>
+	        <div class="alert alert-dismissable alert-danger" style="display:none" id="mynewcanv3-error">
+              <button type="button" class="close" onclick="$(this).parent().css('display','none')">x</button>
+              <p> <strong>Error. </strong> What you have entered is neither a valid pdb code nor a valid smiles string.</p>
+            </div>
+          
+	        <div id="mynewcanv3"></div>
+	      </center>
+	    </div>
+  </div>
+</div>
+</body>
+</html> 

@@ -1,0 +1,114 @@
+#>mac showshapes
+macro showshapes s_shape s_color as_atoms r_occ i_bfact r_max i_max
+  r_occ = r_occ / 10.0
+  r_max = r_max / 10.0
+  for i=1,Nof(as_atoms)
+    if (Occupancy(as_atoms[i])[1] < r_occ) then
+	  continue
+	endif
+	if (Occupancy(as_atoms[i])[1] > r_max) then
+	  continue
+	endif
+	if (Bfactor(as_atoms[i])[1] < i_bfact) then
+	  continue
+	endif
+	if (Bfactor(as_atoms[i])[1] > i_max) then
+	  continue
+	endif
+    newshape = $s_shape
+	display as_atoms[i] wire
+	# first put it to zero
+	my_trans = -Mean(Xyz(newshape))
+	translate newshape my_trans
+    translate newshape Xyz(as_atoms[i])
+	display newshape
+	color newshape $s_color
+	rename newshape Name(s_shape,unique)
+  endfor
+  keep grob
+endmacro
+
+#>mac deleteObjs
+macro deleteObjs s_shape as_atoms
+  GRAPHICS.l_redraw = no
+  undisplay as_atoms
+  for i=1,Nof(as_atoms)
+    mynewvar = s_shape+"_"+String(i)
+	delete $mynewvar
+  endfor
+  GRAPHICS.l_redraw = yes
+  display new
+endmacro
+
+#>mac colorMols
+macro colorMols as_mols
+# macro to colour molecules based on the order they come out
+  color xstick as_mols & a_*.//c* molecule 
+  set xstick as_mols 0.1
+endmacro
+
+#>mac findSymNeighbors
+macro findSymNeighbors as_ ( as_graph ) r_radius (7.) l_append (no) i_extend_by (2) l_keepEntireChain (no) l_display (yes)
+  l_info=no
+  l_commands=no
+  s_skipMessages="[103]"
+  if ( Nof( as_graph ) == 0 & ( Nof( as_ ) == 0 | Nof( as_ ) > 1000 ) ) return error "\n Select atoms in an object with defined crystallographic symmetry\n"
+  os_ = Obj(as_)[1]
+  if(Symgroup(os_)=="undefined") return error
+  s_objName = Name(os_ object)[1]
+  R_transMatrices = Rarray(0)
+  S_neighborAtoms = Sarray(0)
+  sel_pos = Xyz(as_ & a_*.//!h)
+	center_xyz = Mean(sel_pos)
+  show surface area as_ as_ mute
+  sel_surf_pos = Xyz(Acc((as_ & a_*.//!h) 0.01))
+  show surface area os_ mute
+  all_surf_pos = Xyz(Acc((os_ & a_*.//!h) 0.01))
+  group_name = Symgroup(as_)
+  if Tolower(group_name) == "c121" & Abs((Cell(os_)[6]-90.))>1. return error "\n Permutation is needed for this nonstandard C121 cell. Try: modify rotate "
+  n_sym_ops = i_out
+  S_neighborAtoms = Sarray(0)
+  R_symTrans = Rarray(0)
+  nm = s_objName+"Sym"
+  if( !l_append & Nof(a_$nm.)==1 ) delete a_$nm.
+  for i=1,27*n_sym_ops
+    neigh_atoms = Sphere(Xyz(sel_surf_pos,i,group_name,Cell(os_)//center_xyz,translate), os_, r_radius)
+    if Nof(neigh_atoms) != 0 then
+       as_symNeighbors = Sphere(Xyz(sel_pos,i,group_name,Cell(os_)//center_xyz,translate), os_ , r_radius)
+       S_neighborAtoms //= String(Res(as_symNeighbors) number )
+       R_inv = Transform(R_out, inverse)
+       R_symTrans //= R_inv
+       if (i != 1) then
+         copyMol Mol(as_symNeighbors) "tmpobj"
+         transform a_tmpobj. R_inv
+         if(Nof(a_$nm.)==1) move a_tmpobj. a_$nm.
+         if(Nof(a_$nm.)==0) rename a_tmpobj. nm
+       endif
+    endif
+  endfor
+  as2_out = Sphere( as_ a_$nm. r_radius+2. residue )
+  if( Type( a_$nm. 2 ) != "ICM" & ! l_keepEntireChain ) delete a_$nm. & !Select(Select( as2_out 3 ),margin, i_extend_by )
+  set property a_$nm.* "nobreaks"
+  if l_display then
+    if( l_keepEntireChain) display ribbon Mol(as2_out) molecule
+    if(!l_keepEntireChain) display ribbon Select(Select( as2_out 3 ),margin, i_extend_by ) molecule
+    color ribbon as2_out white
+    set color xstick cpk wire as2_out & a_*.//c* lightgreen
+    if(Nof( as_ & a_*.//DW )>0) display as2_out wire
+    if(Nof( as_ & a_*.//DX )>0) display as2_out xstick
+    if(Nof( as_ & a_*.//DC )>0) display as2_out cpk
+  endif
+  nSymNeighbors = Nof(S_neighborAtoms)-1
+  if(l_info & Nof(S_neighborAtoms)>=1) printf " %d crystallographic neighbor(s) found within %.1f A\n" Nof(S_neighborAtoms)-1,r_radius
+  if(l_info & Nof( os_ "bio")>0) printf " This object also has %d BIOMOLECULE(S) and BIOMT transformations\n", Nof(os_ "bio")
+  keep S_neighborAtoms, nSymNeighbors, R_symTrans
+endmacro
+
+#>mac copyMol
+macro copyMol ms_ s_objName ("")
+  ms_ = ms_ & Obj( ms_ )[1]
+	if(s_objName=="") s_objName = Name(Obj(ms_))[1]
+	s_objName = Name( s_objName object )
+  copy Obj(ms_) s_objName
+	delete Select( Mol( Obj(ms_) & !ms_ ) a_$s_objName. )
+endmacro

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "WONKA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "WONKA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.11.1.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/spin.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-ui.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/d3.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/underscore-min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery.qtip.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/gridvar/plugin/jquery.nibrGridVar.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  
+  <script>
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+
+		weatherData();
+    	}
+    	)
+
+
+var spin_opts = {
+  lines: 13, // The number of lines to draw
+  length: 20, // The length of each line
+  width: 10, // The line thickness
+  radius: 30, // The radius of the inner circle
+  corners: 1, // Corner roundness (0..1)
+  rotate: 0, // The rotation offset
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  color: '#000', // #rgb or #rrggbb or array of colors
+  speed: 1, // Rounds per second
+  trail: 60, // Afterglow percentage
+  shadow: false, // Whether to render a shadow
+  hwaccel: false, // Whether to use hardware acceleration
+  className: 'spinner', // The CSS class to assign to the spinner
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  top: '50%', // Top position relative to parent
+  left: '50%' // Left position relative to parent
+};
+ 
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text/html", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text/html");
+    ev.target.appendChild(document.getElementById(data));
+}
+  	
+function register(){
+  
+var my_j = {}
+my_j["FirstName"] = document.getElementById('inputFirstName').value
+my_j["LastName"] = document.getElementById('inputLastName').value
+my_j["EMail"] = document.getElementById('inputEMail').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+if(document.getElementById('inputPassword').value==document.getElementById('inputConfPassword').value){
+
+my_j["Password"] = document.getElementById('inputPassword').value
+}
+else{
+alert("Passwords don't match!");
+return
+}
+
+
+
+
+var URL = "{% url 'WONKA:register_user' %}";
+var spinner = new Spinner(spin_opts).spin(document.getElementById("LOGIN"));
+    $.post(URL, my_j, function(response){
+if(response=="success"){
+
+location.reload();
+
+}
+else{
+alert(response);
+}
+
+ });
+  
+  }
+  
+function login(){
+  
+var my_j = {}
+my_j["EMail"] = document.getElementById('inputEMailLOG').value
+my_j["csrfmiddlewaretoken"] = "{{ csrf_token }}"
+my_j["Password"] = document.getElementById('inputPasswordLOG').value
+
+
+
+
+
+var URL = "{% url 'WONKA:login_user' %}";
+
+
+
+
+
+  var spinner = new Spinner(spin_opts).spin(document.getElementById("LOGIN"));
+
+ $.post(URL, my_j, function(response){
+	if(response=="success"){
+
+		location.reload();
+
+	}
+else{
+alert(response)
+	}
+
+ });
+  
+  }
+
+
+function my_fun(my_res){
+
+}
+  
+  
+// Code to make a fingerprint viewer
+function weatherData() {
+
+// Get the data - rows, columns and mapping
+var url_string = "{% url 'WONKA:get_targ_fps'%}?target_id={{ target.pk }}";
+var spinner = new Spinner(spin_opts).spin(document.getElementById("bigrow"));
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function(data){
+
+
+	my_j = $.parseJSON(data);
+
+	var rows = my_j["rows"],
+        columns = my_j["columns"],
+        columnKeysToLabel = my_j["col_keys"],
+        rowKeysToLabel = my_j["row_keys"],
+        dataMapping = {
+            data: my_j["my_data"],
+            dataIndex: {
+                rowKey: 0,
+                columnKey: 1,
+                interaction: 2,
+                MyType: 5
+            }
+        },
+        
+        
+        
+        dataDisplayMapping = [
+        
+        {
+            dataType: 'interaction',
+            mappings: {
+            
+
+		     Aromatic:"#33CCFF",
+		     Hydrophobic:"#CC9900",
+		     Acid_Base:"#FF0066",
+		     H_bonding:"#0000FF",
+		     Weak_H_bonding:"#9999FF"
+            },
+            labelMapping: {
+
+		     Aromatic:"Aromatic",
+		     Hydrophobic:"Hydrophobic",
+		     Acid_Base:"Acid - base",
+		     H_bonding:"H-bond",
+		     Weak_H_bonding:"Weak H-bond"
+            }
+        },
+    
+{
+    dataType: 'MyType',
+    mappings: {
+      //  OOMMPPAA: function(value, width, height){
+      //      return 'M0,0L' + width + ',' + height;
+      //  },
+    //    XTAL: 'minusRenderer',
+        LLOOMMPPAA: { attrs: {d : 'circleRenderer'} , styles : { stroke: 'black', fill: 'white'}
+        
+        }
+    },
+    labelMapping: {
+        LLOOMMPPAA: 'LLOOMMPPAA'
+     //   XTAL: 'XTAL',
+      //  OOMMPPAA: 'OOMMPPAA'
+    }
+}
+    
+    ];
+
+    $('#FPDEMO').gridVar({
+        cellHeight: 17,
+        cellWidth: 17,
+        rowOrder: my_j["order_mols_two"],
+        columnOrder: columns,
+        xrotate: true,
+        dataMapping: dataMapping,
+		columnKeysToLabel: columnKeysToLabel,
+		rowKeysToLabel: rowKeysToLabel,
+        dataDisplayMapping: dataDisplayMapping,
+        histogramMapping: {
+            data: my_j["mol_freqs"],
+            label: 'Mol. Frequency',
+            totalTicks: 3
+        },
+        
+        // Show the molecule and the interactions in the viewer
+        rowLabelClicked: function(event, data) {
+        var loc =  "{% url 'WONKA:mol_view' %}?choice="+data
+        var my_pk = 1
+        my_pk = data.split("_")[0]
+        if(data.split("_").length > 0){
+            my_pk = data.split("_")[4]
+        }
+        //alert(my_pk)
+        var url_string = mybase+"/Viewer/loader/?choice="+my_pk+"&function=VIEWMOLPK";  
+        runCommand("read mol '"+url_string+"'");
+        runCommand("display a_")
+        runCommand("center a_");
+        $('#cmpd-box img').attr("src",loc);
+        // HACK HERE FORE NOW
+        var url_string = mybase+"/WONKA/get_cmpd_info/?mol_id="+my_pk+"&target_id=2";  
+ 
+         //
+  //      $.ajax({
+ //               url: url_string,
+    //              beforeSend: function( xhr ) {
+  //                  xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  //                }
+   //             }).done(function(data){
+    //            my_j = $.parseJSON(data);
+     //           var my_sps = my_j["SPS"];
+ //               inner_html = ""
+   //             for (var key in my_sps) {
+    //              if (my_sps.hasOwnProperty(key)) {
+    //               var pot_mols = my_sps[key]["pot_mols"];
+
+  //                 var img_src = mybase+"/Viewer/loader/?choice="+encodeURIComponent(my_sps[key]["substruct"])+"&function=2DMOL"; 
+ //                  inner_html += "<img title='"+pot_mols+"' draggable='true' ondragstart='drag(event)' src='"+img_src+"'</img>";
+  //                }
+  //              }
+   //             document.getElementById("info-box").innerHTML = inner_html;
+                           // Now close the ajax call
+ //                   })
+ 
+        
+
+        
+        },
+        // Show summary stats on this interaction
+        columnLabelClicked: function(event, data) {
+		var my_res = "^"+data.split("_")[0]
+        runCommand("display a_MYPROT. xstick");
+        runCommand("undisplay a_MYPROT. cpk");
+        runCommand("center a_MYPROT.*/"+my_res);
+        runCommand("display a_MYPROT.*/"+my_res+" cpk");
+
+        },
+        // To show information on the cell tip
+        cellTip: function(cellData) {
+            var titles = ["NAME: ", "RES: ", "TYPE: ",'Distance: ', "Type:  ", "From:  "],
+                html = '',
+                i;
+
+            for (i=0; i < cellData.length; i++) {
+            
+            // Fill in the data appropriately
+                if (i === 0 || i === 1){
+                    continue;
+                }
+                else {
+                    html += '<p><strong>' + titles[i] + '</strong>' + cellData[i] + '</p>';
+                }
+            }
+            return html;
+        }
+    });
+    
+    
+    $(".dropdown-menu li a").click(function(){
+        var id = $(this).attr('id'),
+            columnOrder,
+            rowOrder,
+            histogramMapping = {label: 'Mol. Frequency', scale: 1, totalTicks: 3};
+		if( id === 'orderSort') {
+            rowOrder = my_j["order_mols_two"];
+            histogramMapping.data = my_j["mol_freqs"];
+        } else if( id === 'molIDSort') {
+            rowOrder =  my_j["order_mols_on"];
+            histogramMapping.data = my_j["mol_freqs"];
+        }else if( id === 'ph4sort') {
+            columnOrder =  my_j["ph4sort"];
+        }else if( id === 'ressort') {
+            columnOrder =  my_j["ressort"];
+        }else if( id === 'numsort') {
+            columnOrder =  my_j["columns"];
+        }
+
+        // reorder the tissues samples by the mutation frequency of the global gene set
+        // or by the top mutated genes (the ones that are displayed
+        if(columnOrder) {
+            $('#FPDEMO').gridVar('option', 'columnOrder', columnOrder);
+        }
+        // reorder the genes by gene type
+        if(rowOrder) {
+            $('#FPDEMO').gridVar('option', 'rowOrder', rowOrder);
+            $('#FPDEMO').gridVar('option', 'histogramMapping', histogramMapping);
+        }
+    });
+    
+    		document.getElementById("ICM-box").style.display = "";
+         var url_string = mybase+"/Viewer/loader/?choice={{my_temp}}&function=VIEWPROTEIN"; 
+        runCommand("read pdb '"+url_string+"' name='MYPROT'");
+                spinner.stop();
+    // End the ajax callback
+
+    })
+
+}
+
+  </script>
+  <link rel="stylesheet" href="{% static "WONKA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/jquery.qtip.min.css" %}">  
+  <link rel="stylesheet" href="{% static "OOMMPPAA/gridvar.css" %}">
+  <link rel="shortcut icon" href="{% static "WONKA/icon.ico" %}" type="image/x-icon">
+   <title>WONKA: FP Viewer </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+    <div  class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'WONKA:index'%}" class="navbar-brand">WONKA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'WONKA:Summarise' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+            <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+            
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+         <div id="bigrow" style="margin-top:60px;"  class="row">
+             <div class="btn-group">
+		        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+		            <span class="glyphicon glyphicon-sort-by-attributes-alt"></span> Order Mols (Rows) By... <span class="caret"></span>
+		        </button>
+		        <ul class="dropdown-menu" role="menu">
+		            <li><a class="nibr-pointer" id="molIDSort">Sort by mol id</a></li>
+		            <li><a class="nibr-pointer" id="orderSort">Sort by best hits</a></li>
+		        </ul>
+    		 </div>
+              <div class="btn-group">
+		        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+		            <span class="glyphicon glyphicon-sort-by-attributes-alt"></span> Order Residue (Cols) By... <span class="caret"></span>
+		        </button>
+		        <ul class="dropdown-menu" role="menu">
+		            <li><a class="nibr-pointer" id="ph4sort">Sort by interaction type</a></li>
+		            <li><a class="nibr-pointer" id="numsort">Sort by residue number </a></li>
+		            <li><a class="nibr-pointer" id="ressort">Sort by residue type </a></li>
+		        </ul>
+    		 </div>
+	          <div class="col-lg-12" id="FPDEMO">
+	          </div>
+    	 </div>
+         <div  class="row">          
+		     <div class="col-lg-4" id="cmpd-box">
+		     	<img width="50%" id="MOL_IMAGE"></img> 
+		     	<div id="info-box"> </div>
+		     </div>
+			<div id="ICM-box" style="display:none;margin-top:20px;" class="col-lg-8">
+			  <div id="ICM-container">
+			  <object type="application/x-molsoft-icb" style="width: 100%; height:550px; margin: 0 !important;" id="ActiveIcmCtl">
+			  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+			  <param value="windowed" name="wmode">
+			  </object>       
+	    	  </div>
+	    	</div>
+    	</div>
+    </div>
+  </body>
+  </html>

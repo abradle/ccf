@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "LLOOMMPPAA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.7.min.js" %}"></script>
+  <script src="{% static "LLOOMMPPAA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+  <link rel="shortcut icon" href="{% static "OOMMPPAA/icon.ico" %}" type="image/x-icon">
+  <script src="{% static "OOMMPPAA/bootstrap-slider.js" %}"></script>
+  <link rel="stylesheet" href="{% static "OOMMPPAA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/slider.css" %}">
+  
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/amcharts.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/radar.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/serial.js"></script>
+<script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/none.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/chalk.js"></script>
+  <script type="text/javascript" src="http://www.amcharts.com/lib/3/themes/light.js"></script>
+  
+   <title>LLOOMMPPAA: {{ target.title }}</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+
+   
+<style>
+#chartdiv {
+	width		: 100%;
+	height		: 300px;
+	font-size	: 11px;
+}
+
+#llchartdiv {
+	width		: 100%;
+	height		: 300px;
+	font-size	: 11px;
+}
+#aromchartdiv {
+	width		: 100%;
+	height		: 200px;
+	font-size	: 11px;
+}
+#acceptchartdiv {
+	width		: 100%;
+	height		: 200px;
+	font-size	: 11px;
+}
+#donorchartdiv {
+	width		: 100%;
+	height		: 200px;
+	font-size	: 11px;
+}
+
+.modal-dialog{
+position: absolute;
+left: 50%;
+//now you must set a margin left under zero - value is a half width your window
+margin-left: -312px;
+// this same situation is with height - example
+height: 800px;
+top: 80%;
+margin-top: -250px;
+} 
+</style>
+
+
+<script>
+var loadmymolold = "";
+var target_id = {{ target.pk }};
+var target_name= '{{ target.title }}';
+function loadmymol(){
+// javascript function to run when loading molecular images
+pdb_code = document.getElementById('pdbin').value;
+if(pdb_code == loadmymolold){
+// Don't submit the same request twice
+  var me=1;
+}
+else{
+// Delete an existing molecule
+runCommand('GRAPHICS.l_redraw = no');
+runCommand('delete a_.* &! a_act.* &! a_inact.* &! a_shape.* &! a_{{ target.prot }}.* ');
+runCommand('GRAPHICS.l_redraw = yes');
+runCommand('display new');
+// Reset the catch variable
+loadmymolold = pdb_code;
+// load the macro, wait two seconds for this to finish
+var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+runCommand('call "'+mynewurl+'"');
+// First make a call to see what it is (PDB code, valid smiles or not either -> returns None or PDB code either way)
+var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=CHECKMOL&target={{  target.pk }}';
+var me = "";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   pdb_code = data;
+   if(pdb_code=="None molecule"){
+     document.getElementById('mynewcanv-error').style.display="";
+     document.getElementById('mynewcanv3-error').style.display="";
+   }
+   else{
+     document.getElementById('mynewcanv-error').style.display="none";
+     document.getElementById('mynewcanv3-error').style.display="none";
+  // Now make the actual request for the molecule
+   var url_string = mybase+'/Viewer/loader/?choice='+pdb_code+'&function=VIEWMOL';
+   runCommand('read mol "'+url_string+'"');
+   runCommand('display a_.* &! a_act.* &! a_inact.* &! a_shape.* xstick');
+   // And for the image
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=1&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv');
+   var url_string_new =mybase+'/Viewer/loader/?function=MAKESIM&map=3&choice='+pdb_code+'&target='+target_id;
+   fillme(url_string_new,'mynewcanv3');
+    }
+  })
+}
+}
+function updateMap(){
+// function to update the activiy maps
+
+var myMaps=new Array();
+var myPks =new Array();
+runCommand('deleteObjs "star" Atom(a_act.)');
+runCommand('deleteObjs "cube" Atom(a_inact.)');
+runCommand('deleteObjs "doublepyramid" Atom(a_non.)');
+{% for map in maps %}
+myMaps[{{ forloop.counter0 }}] = '{{map.Type}}'
+myPks[{{ forloop.counter0 }}] = {{ map.pk }}
+{% endfor %}
+
+for (var i=0;i<myMaps.length;i++)
+	{
+	if ($('#choice'+myMaps[i]+'blah').is(':checked'))
+		{
+		loadpdblight(myMaps[i],myPks[i])
+		};
+	};
+};
+
+function maxAct(log){
+           if (log==0){  
+           var ht = String($(window).height()*0.8)+"px"
+           document.getElementById('act-container').style.height=ht;
+           document.getElementById('maxactbutt').style.display="none";
+           document.getElementById('minactbutt').style.display="";
+           }
+           else if(log==1){
+           document.getElementById('act-container').style.height="";
+           document.getElementById('maxactbutt').style.display="";
+           document.getElementById('minactbutt').style.display="none";
+           }
+};
+
+function maxICM(log){
+
+// Function to control the size of the ICM window. Should go in ICM_funs.js eventually
+    		// undisplay all the divs
+    		
+    		var mydivs = new Array('ICM','maps','sliders','act','im','im2');
+
+    		
+			if(log==0){    		
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='none';
+			}
+			document.getElementById('ICM-box').setAttribute("class","col-lg-12");
+			var wt = String($(window).width())+"px"
+			var ht = String($(window).height()*0.8)+"px"
+            document.getElementById('ActiveIcmCtl').style.height=ht;
+            document.getElementById('ActiveIcmCtl').style.width=wt;
+            document.getElementById('tot-container').style.marginLeft="20px";
+            document.getElementById('tot-container').style.marginRight="20px";
+            //.margin-left="10px";
+            document.getElementById('minbutt').style.display="";
+            document.getElementById('maxbutt').style.display="none";
+            document.getElementById('mmpdispbutt').style.display="";
+            document.getElementById('mmprembutt').style.display="";
+            document.getElementById('ICM-png').style.display="none";
+            var ht = String($(window).height()*0.8)+"px"
+			var wt = String($(window).width()*0.3)+"px"        
+            
+            }
+            else if(log==1)
+            {
+    		for (var i = 1; i < mydivs.length; i++) {
+    		  document.getElementById(mydivs[i]+'-container').style.display='';
+			}
+			document.getElementById('ICM-png').style.display="";
+			document.getElementById('ICM-box').setAttribute("class","col-lg-6");
+            document.getElementById('ActiveIcmCtl').style.height='450px';
+            document.getElementById('ActiveIcmCtl').style.width='100%';
+            document.getElementById('tot-container').style.marginLeft="";
+            document.getElementById('tot-container').style.marginRight="";
+            document.getElementById('minbutt').style.display="none";
+            document.getElementById('maxbutt').style.display="";   
+            document.getElementById('mmpdispbutt').style.display="none";
+            document.getElementById('mmprembutt').style.display="none";        
+            
+            }
+};
+var ht = String($(window).height()*0.8)+"px"
+			
+
+
+function  letsshape2(shape){
+// function to put  shapes into the ICM viewer
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	runCommand('read binary "'+myurl+'" name="'+shape+'"')
+	runCommand('undisplay '+shape)
+};
+
+window.onload = function()
+                {
+
+ 	// load the macro
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+    runCommand('call "'+mynewurl+'"');
+	var mynewurl = mybase+"{% static "OOMMPPAA/macros.icm" %}";
+	runCommand('call "'+mynewurl+'"');
+	// Now load in the shapes
+	var myurl = mybase+"{% static "OOMMPPAA/shapes.icb" %}"
+	letsshape2('star');
+	letsshape2('cube');
+};
+ $(function(){
+    $("[data-hide]").on("click", function(){
+        $("." + $(this).attr("data-hide")).hide();
+        // -or-, see below
+        // $(this).closest("." + $(this).attr("data-hide")).hide();
+    });
+});
+var spinner = '{% static "OOMMPPAA/spinner.gif" %}'
+    	$(document).ready(function() {
+    		  var spinurl = mybase+spinner;
+              var img = document.createElement("IMG");
+              img.src = spinurl;     		
+	    	/* Make sliders */
+	        $("#confs").slider({});
+	        $("#conserved").slider({});
+	        $("#pharma").slider({});
+	        $("#redgraph").slider({});
+	        setTimeout(function(){
+	        // Load the protein
+	        loadmyprot('{{ target.prot }}')
+	        // Now set the view
+	        runCommand('display a_*{{ target.prot }}. ribbon');
+	        // Load in any ligand for this target and centre on this ligand
+            var mol_string = mybase+'/Viewer/loader/?choice={{ target.mol }}&function=VIEWMOL';
+            runCommand('read mol "'+mol_string+'" name="MYMOL"');
+            runCommand('display a_MYMOL*.* xstick');
+            runCommand('center a_MYMOL*.* ');
+            var mol_string = mybase+'/Viewer/loader/?target={{ target.pk }}&function=GETSP&choice=1';
+            runCommand('read mol "'+mol_string+'"');
+            //runCommand('center a_MYMOL*.* ');
+	        },2000)
+    	});
+    	
+$(document).keypress(function(event) {
+	
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if (keycode == '13') {
+        event.preventDefault();
+        $('#searchbutt').click();
+    }
+});
+</script>
+
+
+<script>
+// functions specific to LLOOMMPPAA
+function toggle_element(ele_name){
+if(document.getElementById(ele_name).style.display==""){
+document.getElementById(ele_name).style.display="none";
+}
+
+else{
+document.getElementById(ele_name).style.display="";
+};
+
+
+};
+
+
+function searchdbs(){
+var myDbs=new Array();
+{% for db in DATABASES %}
+  myDbs[{{ forloop.counter0 }}] = '{{db}}'
+{% endfor %}
+my_s = new Array()
+for (var i=0;i<myDbs.length;i++)
+	{
+	if ($('#choice'+myDbs[i]+'mydb').is(':checked'))
+		{
+		my_s.push(myDbs[i])
+		};
+	};
+	if(my_s.length==0){
+	  alert('you must select a database')
+	}
+	
+	else{
+	findexps('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }}',"mymolcanv",my_s.join());
+	}
+};
+
+// Check which ph4s are ticked
+var myph4s=new Array();
+var ph4vals = new Array();
+{% for ph4 in ph4s %}
+  myph4s[{{ forloop.counter0 }}] = '{{ph4.smiles}}'
+  ph4vals[{{ forloop.counter0 }}] = '{{ph4.value}}'
+{% endfor %}
+function findpoints(){
+
+// Check the number of near pharma slider
+var my_num = $('#pharma').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+var min_num = parseInt(my_num[0]);
+var max_num = parseInt(my_num[1]);
+var my_max = parseInt(document.getElementById('pharma').attributes[5].value)
+if(max_num == my_max){
+  max_num = "INF"
+}
+// Check the number of near redgraph slider
+var red_num = $('#redgraph').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+var min_red = parseInt(red_num[0]);
+var max_red = parseInt(red_num[1]);
+var red_max = parseInt(document.getElementById('redgraph').attributes[5].value)
+if(max_red == red_max){
+  max_red = "INF"
+}
+
+
+
+// Check which check boxes are checked
+my_cons = new Array();
+{% for con in cons %}
+  if($('#conpoint{{  con.pk }}').is(':checked')){
+		{
+		my_cons.push({{ con.pk }})
+		};
+  }
+{% endfor %}
+
+// Fill the array
+my_s = new Array();
+for (var i=0;i<myph4s.length;i++)
+	{
+	if ($('#choice'+myph4s[i]+'ph4').is(':checked'))
+		{
+		my_s.push(ph4vals[i])
+		};
+	};
+	
+	if(my_s.length==0){
+	  alert('you must select a pharmacophore point')
+	}
+	
+	else{
+	// pass the target_id and the query ph4 to findexps
+	runCommand('delete my_var');
+	runCommand('my_var = String(Box())');
+	var my_var = getVar('my_var').replace(/ /g,'');
+	var url_string = mybase+'/Viewer/loader/?function=PH4&target='+target_id+'&choice='+my_s.join()+'&map='+my_var+'&output=sdf&option='+my_cons.join()+'__'+min_num+'__'+max_num+'__'+max_red+'__'+min_red;
+	url_string = url_string.replace(/[\r\n]/g, "");
+	
+	var url_string_new = mybase+'/Viewer/loader/?function=PH4&target='+target_id+'&choice='+my_s.join()+'&map='+my_var+'&output=img&option='+my_cons.join()+'__'+min_num+'__'+max_num+'__'+max_red+'__'+min_red;
+	url_string_new = url_string_new.replace(/[\r\n]/g, "");	
+	var inner_html = "";
+	//First up load the json dict
+	// Now get the json back
+	$.ajax({
+	  url: url_string_new,
+	  beforeSend: function( xhr ) {
+	    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+	  }
+	})
+	  .done(function( data ) {
+	   // now the data object is the json dict.
+	   // Use it to file the mols on the right hand side
+	   var json_d = $.parseJSON(data);
+	   // So now make the div
+	for (var key in json_d) {
+	    if (json_d.hasOwnProperty(key)) { // this will check if key is owned by data object and not by any of it's ancestors
+	    // Now draw this molecule as the base molecule
+	    // Now get the mol and sub from the key
+	    	
+	    	var my_mol = key.split("__")[0];
+	    	var my_sub = key.split("__")[1];
+	        var my_src = mybase+'/Viewer/loader/?function=2DMOL&choice='+my_mol+'&option='+my_sub;
+            inner_html += '<img onclick="toggle_element('+"'"+key+"'"+')"; style="box-shadow: 10px 10px 5px #888888;width:100%" src="'+my_src+'"></img>'
+            inner_html += '<div style="display:none"; id='+key+'>'
+	        for (var index in json_d[key]){
+	        // the smiles, val list is json_d[key][smiles]
+	        var my_smi = json_d[key][index][0];
+			var my_num = json_d[key][index][1];
+			var my_div = json_d[key][index][2];
+			// Now make an image and make it clickable
+            var my_src = mybase+'/Viewer/loader/?function=2DMOL&choice='+encodeURIComponent(my_smi)+'&map='+my_div;
+            inner_html += '<img onclick="show_mol('+"'"+my_smi+"'"+','+"'"+my_num+"'"+')" style="width:100%"src="'+my_src+'"></img>'
+	        }
+	        inner_html += '</div>'
+	    }
+	}
+	document.getElementById("act-container").innerHTML="";
+	document.getElementById("act-container").innerHTML=inner_html;
+	})	
+	
+	// Now load the molecules
+	runCommand("delete a_EPMAP")
+	runCommand("read mol '"+url_string+"'");
+	runCommand("display a_ ");
+	}
+}
+
+function checkfrag(smiles) {
+var url_string = mybase+'/Viewer/loader/?function=CHECKSMI&choice='+smiles
+  return $.get(url_string);
+}
+function findfrags(opt){
+var myfrags=new Array();
+{% for frag in frags %}
+  myfrags[{{ forloop.counter0 }}] = '{{frag}}'
+{% endfor %}
+
+// Fill the array
+my_s = new Array();
+for (var i=0;i<myfrags.length;i++)
+	{
+	if ($('#choice'+i+'frag').is(':checked'))
+		{
+		my_s.push(myfrags[i])
+		};
+	};
+	// Make a request to check this is valid smiles
+	myfrag = document.getElementById('inputsmi').value
+
+	
+	$.when(checkfrag(myfrag)).done(function(data) {
+  	if(data=="FALSE"){
+  		if(myfrag!=""){
+  		alert("not valid smiles")
+  		}
+  	}
+  	
+  	else{
+  		my_s.push(myfrag)
+  	}
+	// here if nothing is checked you can take input from a text field
+	if(my_s.length==0){
+	  alert('you must select a fragment')
+	}
+
+	else{
+	// pass the target_id and the query frag to findexps
+	var url_string = mybase+'/Viewer/loader/?function=FRAG'+opt+'&target='+target_id+'&choice='+my_s.join();
+	runCommand("read mol '"+url_string+"'");
+	runCommand("display a_");
+	}
+	
+  	}
+	)	
+	
+
+};
+
+function show_mol(smiles, pk){
+var url_string = mybase+'/Viewer/loader/?function=SPNOW&choice='+pk+'&map='+encodeURIComponent(smiles);
+runCommand("delete a_SPMOL*.");
+runCommand("read mol '"+url_string+"'");
+show_confs();
+}
+
+function show_confs(){
+
+// Get the conformation information
+var my_confs = $('#confs').slider('getValue')[0].parentElement.childNodes[1].childNodes[1].innerHTML.split(":");
+var min_conf = parseInt(my_confs[0])-1;
+var max_conf = parseInt(my_confs[1]);
+
+// Get the viewer to show these
+for (var i = min_conf; i < max_conf; i++) { 
+    runCommand("display a_SPMOL"+i+".* xstick");
+};
+
+}
+
+function show_my_sps() { 
+
+runCommand('my_mol = as_graph');
+var my_mol = getVar('my_mol').replace(/ /g,'').replace(/[\n\r]/g, '');
+var patt = /SPMAP\d+/g;
+// Now get the matches
+var res = my_mol.match(patt);
+// Convert the list to a comma seperated string
+var out = res.join().replace(/SPMAP/g,"");
+// Now pass these matches to the server
+var url_string = mybase+'/Viewer/loader/?function=SPNOW&target='+target_id+'&choice='+out;
+// Now get the json back
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   // now the data object is the json dict.
+   // Use it to file the mols on the right hand side
+   var json_d = $.parseJSON(data);
+   inner_html = "";
+for (var key in json_d) {
+    if (json_d.hasOwnProperty(key)) { // this will check if key is owned by data object and not by any of it's ancestors
+        // key -> key
+        //json_d[key] -> val
+        // Use these to populate the right hand div
+        // First the SPmol name
+        inner_html += '<h4 style="margin-top:5px">'+key+'</h4>';
+        inner_html += "<div style='box-shadow: 10px 10px 5px #888888;' id='SPMOL"+key+"'>"
+        // Now put all the smiles in
+        for (var index in json_d[key]){
+	        // the smiles is json_d[key][smiles]
+	        var my_smi = json_d[key][index];
+	        // Now make an image and make it clickable
+	        var my_src = mybase+'/Viewer/loader/?function=2DMOL&choice='+encodeURIComponent(my_smi);
+	        inner_html += '<img onclick="show_mol('+"'"+my_smi+"'"+','+"'"+key+"'"+')" style="width:100%"src="'+my_src+'"></img>'
+        }
+        inner_html += "</div>"
+        
+    }
+}
+document.getElementById("act-container").innerHTML=inner_html
+   
+   
+   })
+
+//runCommand("delete a_SPMOL*. ");
+//runCommand("read mol '"+url_string+"'");
+//runCommand("display a_SPMOL*. ");
+}
+
+function show_cps(x_min,y_min,z_min,x_max,y_max,z_max,pk){
+var icm_s = "R_me = {"+String(x_min)+","+String(y_min)+","+String(z_min)+","+String(x_max)+","+String(y_max)+","+String(z_max)+"}"
+runCommand(icm_s);
+runCommand('CONS'+String(pk)+'= Grob("BOX",R_me)');
+runCommand('display CONS'+String(pk));
+};
+
+function make_cp(in_val) {
+var url_string = ""
+if (in_val==undefined){
+// Geth the box coords
+	runCommand('delete my_var');
+	runCommand('my_var = String(Box())');
+	var my_var = getVar('my_var').replace(/ /g,'');
+// Get the ph4
+	var my_type = ""
+	var my_s = new Array();
+	for (var i=0;i<myph4s.length;i++)
+	{
+	if ($('#add'+myph4s[i]+'ph4').is(':checked'))
+		{
+		my_type = ph4vals[i]
+		my_s.push(ph4vals[i])
+		};
+	};
+	
+	if(my_s.length==0){
+	  alert('you must select a pharmacophore point')
+	}
+	
+	//
+	url_string = mybase+'/Viewer/loader/?function=CP&target='+target_id+'&choice='+my_type+'&map='+my_var+'&option=make'
+	url_string = url_string.replace(/[\r\n]/g, "");
+}
+else{
+	url_string = mybase+'/Viewer/loader/?function=CP&target='+target_id+'&choice='+my_type+'&map='+in_val+'&option=del'
+	url_string = url_string.replace(/[\r\n]/g, "");
+}
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+
+  document.getElementById('condiv').innerHTML= data;
+  
+  })
+}
+
+
+
+function rescore_cp(){
+
+
+var url_string = mybase+'/Viewer/loader/?choice=1&function=RESCORE&target={{  target.pk }}';
+document.getElementById("rescore-body").innerHTML = "RESCORING: PLEASE WAIT...<img src='{% static "OOMMPPAA/spinner.gif" %}' ></img>";
+$('#rescoreModal').modal({
+  backdrop: "static"
+}) 
+
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+
+document.getElementById("rescore-body").innerHTML = "DONE"; 
+$('#rescoreModal').modal('hide')
+$('#rescoreModal').modal({
+  backdrop: true
+})   
+  })
+};
+
+// SET UP CHART
+var chart_basis =  {
+    "type": "serial",
+	"theme": "dark",
+//    "handDrawn":true,
+ //   "handDrawScatter":3,
+    "legend": {
+        "horizontalGap": 10,
+        "maxColumns": 1,
+        "position": "right",
+		"useGraphSettings": true,
+		"markerSize": 10
+    },
+    "dataProvider": {},
+    "valueAxes": [{
+        "stackType": "regular",
+        "axisAlpha": 0.3,
+        "gridAlpha": 0
+    }],
+    startDuration:0.1,
+    "graphs": [{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact one radius"
+    }, {
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact three radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "newStack": true,   
+        "title": "Act One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act one radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act three radius"
+    }
+],
+    "categoryField": "bin",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "axisAlpha": 0,
+        "gridAlpha": 0,
+        "position": "left"
+    },
+  "exportConfig":{
+    "menuTop":"20px",
+        "menuRight":"20px",
+        "menuItems": [{
+        "icon": '/lib/3/images/export.png',
+        "format": 'png'    
+        }]  
+    }
+}
+var chart_basis_two =  {
+    "type": "serial",
+	"theme": "dark",
+//    "handDrawn":true,
+ //   "handDrawScatter":3,
+    "legend": {
+        "horizontalGap": 10,
+        "maxColumns": 1,
+        "position": "right",
+		"useGraphSettings": true,
+		"markerSize": 10
+    },
+    "dataProvider": {},
+    "valueAxes": [{
+        "stackType": "regular",
+        "axisAlpha": 0.3,
+        "gridAlpha": 0
+    }],
+    startDuration:0.1,
+    "graphs": [{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact one radius"
+    }, {
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact three radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "newStack": true,   
+        "title": "Act One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act one radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act three radius"
+    }
+],
+    "categoryField": "bin",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "axisAlpha": 0,
+        "gridAlpha": 0,
+        "position": "left"
+    },
+  "exportConfig":{
+    "menuTop":"20px",
+        "menuRight":"20px",
+        "menuItems": [{
+        "icon": '/lib/3/images/export.png',
+        "format": 'png'    
+        }]  
+    }
+}
+var chart_basis_three =  {
+    "type": "serial",
+	"theme": "dark",
+//    "handDrawn":true,
+ //   "handDrawScatter":3,
+    "legend": {
+        "horizontalGap": 10,
+        "maxColumns": 1,
+        "position": "right",
+		"useGraphSettings": true,
+		"markerSize": 10
+    },
+    "dataProvider": {},
+    "valueAxes": [{
+        "stackType": "regular",
+        "axisAlpha": 0.3,
+        "gridAlpha": 0
+    }],
+    startDuration:0.1,
+    "graphs": [{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact one radius"
+    }, {
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Inact Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "inact three radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "newStack": true,   
+        "title": "Act One",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act one radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Two",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act two radius"
+    },{
+        "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+        "fillAlphas": 0.8,
+        "labelText": "[[value]]",
+        "lineAlpha": 0.3,
+        "title": "Act Three",
+        "type": "column",
+    "color": "#000000",
+        "valueField": "act three radius"
+    }
+],
+    "categoryField": "bin",
+    "categoryAxis": {
+        "gridPosition": "start",
+        "axisAlpha": 0,
+        "gridAlpha": 0,
+        "position": "left"
+    },
+  "exportConfig":{
+    "menuTop":"20px",
+        "menuRight":"20px",
+        "menuItems": [{
+        "icon": '/lib/3/images/export.png',
+        "format": 'png'    
+        }]  
+    }
+}
+function handleClick(event){
+
+alert(event.item.category);
+onclick="findpoints();"
+}
+
+var my_obj = Object();
+
+
+// Make the charts
+var radio_ch =  {
+    "type": "radar",
+    "theme": "none",
+    "legend": {
+        "horizontalGap": 10,
+        "maxColumns": 1,
+        "position": "right",
+		"useGraphSettings": true,
+		"markerSize": 10
+    },
+    "dataProvider": [],
+    "valueAxes": [{
+        "axisTitleOffset": 20,
+        "minimum": 0,
+        "axisAlpha": 0.15
+    }],
+    "graphs": [{
+        "balloonText": "[[value]] [[category]]: radius one",
+        "bullet": "round",
+        "title": "One",
+        "valueField": "one radius"
+    },
+              {
+        "balloonText": "[[value]] [[category]]: radius two",
+        "bullet": "round",
+        "title": "Two",
+        "valueField": "two radius"
+    },
+              {
+        "balloonText": "[[value]] [[category]]: radius three",
+        "bullet": "round",
+        "title": "Three",
+        "valueField": "three radius"
+    }],
+    "categoryField": "feature",
+    "exportConfig": {
+        "menuTop":"10px",
+        "menuRight":"10px",
+        "menuItems": [{
+            "icon": '/lib/3/images/export.png',
+            "format": 'png'
+        }]
+    }
+    }
+var radio_ch_two =  {
+    "type": "radar",
+    "theme": "none",
+    "legend": {
+        "horizontalGap": 10,
+        "maxColumns": 1,
+        "position": "right",
+		"useGraphSettings": true,
+		"markerSize": 10
+    },
+    "dataProvider": [],
+    "valueAxes": [{
+        "axisTitleOffset": 20,
+        "minimum": 0,
+        "axisAlpha": 0.15
+    }],
+    "graphs": [{
+        "balloonText": "[[value]] [[category]]: radius one",
+        "bullet": "round",
+        "title": "One",
+        "valueField": "one radius"
+    },
+              {
+        "balloonText": "[[value]] [[category]]: radius two",
+        "bullet": "round",
+        "title": "Two",
+        "valueField": "two radius"
+    },
+              {
+        "balloonText": "[[value]] [[category]]: radius three",
+        "bullet": "round",
+        "title": "Three",
+        "valueField": "three radius"
+    }],
+    "categoryField": "feature",
+    "exportConfig": {
+        "menuTop":"10px",
+        "menuRight":"10px",
+        "menuItems": [{
+            "icon": '/lib/3/images/export.png',
+            "format": 'png'
+        }]
+    }
+    }
+// First the ones explaining the propensity data
+$.ajax({
+  url: mybase + '/Viewer/loader/?function=GETBASIS&target={{target.pk}}&choice=2&output=sdf',
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var ret_var =  $.parseJSON(my_data);
+  my_obj.chart = AmCharts.makeChart("chartdiv", radio_ch);
+  my_obj.chart.addTitle("Crystal structures");
+  
+  })
+
+$.ajax({
+  url: url_s = mybase + '/Viewer/loader/?function=GETBASIS&target={{target.pk}}&choice=2&output=sdf',
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var ret_var =  $.parseJSON(my_data);
+  my_obj.llchart = AmCharts.makeChart("llchartdiv", radio_ch_two);
+  my_obj.llchart.addTitle("OOMMPPAA structures");
+  })
+// Second the ones explaining the OOMMPPAA data
+$.ajax({
+  url: url_s = mybase + '/Viewer/loader/?function=GETBASIS&target={{target.pk}}&choice=3&output=sdf',
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var ret_var =  $.parseJSON(my_data);
+  my_obj.donorchart = AmCharts.makeChart("donorchartdiv", chart_basis_two);
+  my_obj.donorchart.addTitle("Donors");
+  })
+$.ajax({
+  url: url_s = mybase + '/Viewer/loader/?function=GETBASIS&target={{target.pk}}&choice=3&output=sdf',
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var ret_var =  $.parseJSON(my_data);
+  my_obj.acceptchart = AmCharts.makeChart("acceptchartdiv", chart_basis);
+  my_obj.acceptchart.addTitle("Acceptors");
+  })
+$.ajax({
+  url: url_s = mybase + '/Viewer/loader/?function=GETBASIS&target={{target.pk}}&choice=3&output=sdf',
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var ret_var =  $.parseJSON(my_data);
+  my_obj.aromchart = AmCharts.makeChart("aromchartdiv", chart_basis_three);
+  my_obj.aromchart.addTitle("Aromatics");
+  })
+
+
+
+function show_chart(my_chart,opt,option) {
+	runCommand('delete my_var');
+	runCommand('my_var = String(Box())');
+	var my_var = getVar('my_var').replace(/ /g,'');
+	var url_string = "";
+	if(opt=="comp"){
+	url_string = mybase+'/Viewer/loader/?function=BOXPLOT&target={{target.pk}}&output='+opt+option+'&choice='+option+'=1&map='+my_var+'&option=Standard';
+	}
+	else{
+	
+	url_string = mybase+'/Viewer/loader/?function=BOXPLOT&target={{target.pk}}&output='+opt+'&choice='+option+'&map='+my_var+'&option=Standard';
+	}
+	url_string = url_string.replace(/[\r\n]/g, "");
+
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+})
+  .done(function( my_data ) {
+  var json_d = $.parseJSON(my_data);
+  my_chart.dataProvider = json_d;
+  my_chart.validateData();
+  my_chart.addListener("clickGraphItem", handleClick);
+
+  });
+};
+
+
+</script>
+
+
+
+  </head>
+  <body> 
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'LLOOMMPPAA:index'%}" class="navbar-brand">LLOOMMPPAA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'LLOOMMPPAA:ExperimentViewer' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Windows">Windows</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Ubuntu">Ubuntu</a></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/dist/Centos">Centos</a></li>
+			       <li class="divider"></li>
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/src">Python</a></li>
+			    </ul>
+            </li>
+                        <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+<div id="tot-container" class="container">
+
+
+<div class="modal fade" id="rescoreModal" tabindex="-1" role="dialog" aria-labelledby="rescoremodallabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="rescoremodallabel">Rescore</h4>
+      </div>
+      <div id="rescore-body" class="modal-body">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <div class="row">
+    <div class="col-lg-12">
+      <p></p>
+	</div>
+  </div>
+<div class="row">
+<div class="col-lg-5">
+  <div id="chartdiv"></div>
+</div>
+<div class="col-lg-5">
+  <div id="llchartdiv"></div>
+</div>
+<div class="col-lg-2">
+	    <div style="marign-top:20px;text-align:center"  class="well" id="box-container">	      
+	      <a id="makeboxbut" onclick="makeBox()" class="btn btn-sm btn-success">Display box</a>
+	      <a id="graphbut" style="margin-top:10px;" onclick="show_chart(my_obj.chart,'xtal',1.0);show_chart(my_obj.llchart,'oommppaa',10.0);show_chart(my_obj.donorchart,'comp',0);show_chart(my_obj.acceptchart,'comp',1);show_chart(my_obj.aromchart,'comp',2);" class="btn btn-sm btn-info">Refresh Data</a>
+	      <p></p>
+
+
+	     <a id="searchbut" onclick="findpoints();" class="btn btn-sm btn-success">Search compounds</a>
+                    <label class="col-lg-2 control-label"></label>
+		      		{% for ph4 in ph4s %}
+                      <div  class="checkbox">
+                        <label>
+                           <input  name="optionsRadios" type="checkbox" id="choice{{ph4.smiles}}ph4"; value="{{ ph4.smiles }}"> {{ ph4.smiles }}
+                        </label>
+                      </div>
+		     		{% endfor %}
+
+</div>
+</div>
+   <div class="row">
+
+	<div id="ICM-box" class="col-lg-6">
+
+	  <div id="ICM-container">
+	  <object type="application/x-molsoft-icb" style="z-index:100004;width: 100%; height:450px; margin: 0 !important;" id="ActiveIcmCtl">
+	  <param value="{% static "Viewer/overview.icb" %}" name="targetFile">
+	  <param value="transparent" name="wmode">
+	</object>
+	<p></p>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={255,255,255}');">White display</a>
+    <a class="btn btn-sm btn-default" onclick="runCommand('color background rgb={0,0,0}');">Dark display</a>
+    <a style="margin-left:10px" class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.prot }}. ');">Protein off</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.prot }}. xstick');runCommand('display a_{{ target.prot }}. ribbon');runCommand('display a_{{ target.prot }}. skin');">Surface</a>
+    <a class="btn btn-sm btn-primary" onclick="runCommand('undisplay a_{{ target.prot }}. skin');runCommand('display a_{{ target.prot }}. xstick');">Stick</a>
+	<a id="maxbutt" style="margin-left:10px" class="btn btn-sm btn-info" onclick="maxICM(0);">Max</a>
+	<a id="mmpdispbutt" style="margin-left:10px;display:none" onclick="document.getElementById('newmolcanv').style.display='';findasgr('{{ maps.0.pk }},{{ maps.1.pk }},{{ maps.2.pk }}','newmolcanv');" class="btn btn-sm btn-success">Display compounds</a>
+    <a id="mmprembutt" style="display:none" onclick="runCommand('GRAPHICS.l_redraw = no');runCommand('delete a_MOL*.*');runCommand('GRAPHICS.l_redraw = yes');runCommand('display new');" class="btn btn-sm btn-warning">Remove </a>
+    <a id="minbutt" style="display:none;margin-left:10px" class="btn btn-sm btn-danger" onclick="maxICM(1);">Min</a>
+	</div>
+    <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+    <p>Based on <a href="http://getbootstrap.com">Bootstrap</a>. Icons from <a href="http://fortawesome.github.io/Font-Awesome/">Font Awesome</a>. Web fonts from <a href="http://www.google.com/webfonts">Google</a>. Favicon by <a href="https://twitter.com/geraldhiller">Gerald Hiller</a>.</p>
+	</div>
+	
+<div class="col-lg-5">
+  <div id="acceptchartdiv"></div>
+</div>
+<div class="col-lg-5">
+  <div id="donorchartdiv"></div>
+</div>
+<div class="col-lg-5">
+  <div id="aromchartdiv"></div>
+
+</div>
+
+  </div>
+</div>
+</body>
+</html> 
+

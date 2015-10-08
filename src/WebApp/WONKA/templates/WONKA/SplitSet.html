@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  {% load staticfiles %}
+  <link href="{% static "WONKA/bootstrap.css" %}" media="screen" rel="stylesheet"/>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="{% static "WONKA/bootstrap.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-1.11.1.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/spin.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery-ui.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/d3.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/underscore-min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/jquery.qtip.min.js" %}"></script>
+  <script src="{% static "OOMMPPAA/gridvar/plugin/jquery.nibrGridVar.js" %}"></script>
+  <script src="{% static "OOMMPPAA/ICM_funs.js" %}"></script>
+ <script src="{% static "LLOOMMPPAA/nprogress.js" %}"></script>
+<link rel='stylesheet' href='{% static "LLOOMMPPAA/nprogress.css" %}'/>   
+  <script>
+  function isIcmPluginEnabled(){
+    var browser = "other";
+    var userAgent = navigator.userAgent.toLowerCase();
+    
+    if(userAgent.indexOf("msie") != -1){
+        browser = "msie";
+    }
+    else
+    if (userAgent.indexOf("firefox") != -1) {
+        browser = "firefox";
+    }
+    else
+    if (userAgent.indexOf("chrome") != -1) {
+        browser = "chrome";
+    }
+    else
+    if (userAgent.indexOf("safari") != -1) {
+        browser = "safari";
+    }
+
+        if (navigator.plugins && navigator.plugins.length > 0) {
+            for (i=0; i < navigator.plugins.length; i++ ) {
+                if (navigator.plugins[i].name.toLowerCase().indexOf('molsoft')!= -1){
+                    return true;
+                }
+            }
+        return false;
+    }
+}
+		var isplugin = false;
+    	$(document).ready(function() {
+
+		weatherData();
+    	}
+    	)
+
+
+var spin_opts = {
+  lines: 13, // The number of lines to draw
+  length: 20, // The length of each line
+  width: 10, // The line thickness
+  radius: 30, // The radius of the inner circle
+  corners: 1, // Corner roundness (0..1)
+  rotate: 0, // The rotation offset
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  color: '#000', // #rgb or #rrggbb or array of colors
+  speed: 1, // Rounds per second
+  trail: 60, // Afterglow percentage
+  shadow: false, // Whether to render a shadow
+  hwaccel: false, // Whether to use hardware acceleration
+  className: 'spinner', // The CSS class to assign to the spinner
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  top: '50%', // Top position relative to parent
+  left: '50%' // Left position relative to parent
+};
+ 
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text/html", ev.target.id);
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text/html");
+    ev.target.appendChild(document.getElementById(data));
+}
+  	
+function chose_clus(clus_id){
+var out_url = "{% url 'WONKA:Summarise' target_id %}?MY_CMPS=";
+var out_l = []
+	if(clus_id==undefined){
+// So now make the url with the appropriate cmpd_ids
+		for(var cluster in my_j){
+		var myArray = my_j[cluster]["mols"];
+		var rand = myArray[Math.floor(Math.random() * myArray.length)];
+		out_l.push(rand);
+		}
+		out_url = out_url + out_l.join();
+		window.open(out_url,'_blank');
+	}
+	else if(clus_id=="FRAGS"){
+	
+		var in_url = "{% url 'WONKA:get_frags' target_id %}";
+		
+		$.ajax({
+		  url: in_url,
+		  beforeSend: function( xhr ) {
+		    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+		  }
+			}).done(function(data){
+			  
+			   out_l = $.parseJSON(data);
+				out_url = out_url + out_l.join();
+				window.open(out_url,'_blank');	    
+			
+			})
+	
+	}
+	else{
+
+	out_url = out_url + my_j[clus_id]["mols"].join();
+	window.open(out_url,'_blank');
+	}	
+	
+}
+  
+var my_j= "";
+// Code to make a fingerprint viewer
+function weatherData() {
+
+// Get the data - rows, columns and mapping
+var url_string = "{% url 'WONKA:view_clusts' target_id %}?CUTOFF=0.7";
+var spinner = new Spinner(spin_opts).spin(document.getElementById("bigrow"));
+var url_cmp =  "{% url 'Viewer:loader'  %}?function=VIEWCMPDPK&choice=";
+var url_smi =  "{% url 'Viewer:loader'  %}?function=2DMOL&choice=";
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
+  }
+}).done(function(data){
+	my_j = $.parseJSON(data);
+	for(var key in my_j){
+		// Append a new div here
+		$('#main-div').append('<div class="col-lg-3" id="'+ key +'" ><h3> CLUSTER '+ key +': <a onclick="chose_clus('+key+');" class="btn btn-sm btn-success">Chose</a></h3></div>');
+		smarts_url = "http://www.smartsview.de/smartsview/auto/png/1/both/"
+		if (my_j[key]["mcs"]!="NONE"){
+			mcs_url = smarts_url + encodeURIComponent(my_j[key]["mcs"]);
+			$('#' + key).append('<img style="width:100%" src="' + mcs_url + '"> </img><div id="' + key + 'MYMOLS" > </div>');
+		    var my_a = my_j[key]["mols"]
+			for(i=0; i<my_a.length; i++){
+	 // Append a new item in the div here
+	 			var my_url = url_cmp + my_a[i].toString();
+	 			$('#' + key + 'MYMOLS').append('<img src="' + url_cmp + my_a[i].toString() + '"> </img>');
+			}
+			
+		}
+		else{
+			var my_a = my_j[key]["mols"];
+			$('#' + key).append('<img src="' + url_cmp + my_a[0].toString() + '"> </img>');
+		}
+	};
+	$('#main-div').append('<a onclick="chose_clus();" class="btn btn-sm btn-danger">Make subset</a>');
+	$('#main-div').append('<a onclick="chose_clus('+"'"+'FRAGS'+"'"+');" class="btn btn-sm btn-info">Just fragments</a>');
+
+	})
+	
+}
+
+  </script>
+  <link rel="stylesheet" href="{% static "WONKA/bootstrap.min.css" %}">
+  <link rel="stylesheet" href="{% static "OOMMPPAA/jquery.qtip.min.css" %}">  
+  <link rel="stylesheet" href="{% static "OOMMPPAA/gridvar.css" %}">
+  <link rel="shortcut icon" href="{% static "WONKA/icon.ico" %}" type="image/x-icon">
+   <title>WONKA: FP Viewer </title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta charset="utf-8">
+  </head>
+  <body> 
+    <div  class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url 'WONKA:index'%}" class="navbar-brand">WONKA</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="targets">Targets <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+			    {% if targets %}
+			      {% for Target in targets %}
+			        <li><a tabindex="-1"href="{% url 'WONKA:Summarise' Target.id %}">{{ Target.title }}</a></li>
+			      {% endfor %}
+			    {% else %}
+			    <li><a tabindex="-1" >No targets are available.Make your first?</a></li>
+			    {% endif %}
+              </ul>
+            </li>
+            <li>
+              <a href="http://www.blopig.com/blog/">Blog</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="download">Download<span class="caret"></span></a>
+                <ul class="dropdown-menu" aria-labelledby="themes">
+			       <li><a tabindex="-1"href="https://bitbucket.org/abradley/wonka/wiki/Home">Bitbucket</a></li>
+			    </ul>
+            </li>
+            <li>
+              <a href="{% url 'index' %}">HOME</a>
+            </li>
+            
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+        	<div class="row"><br></br>
+        </div>
+    
+    	<div id="main-div" class="row">
+        </div>
+    </div>
+  </body>
+  </html>

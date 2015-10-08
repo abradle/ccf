@@ -1,0 +1,4 @@
+smiles,path_to_pdb,cmpd_id,model_id,chain
+c1ccc2c(c1)c(ccn2)O,WONKA_DATA/4CUS.pdb,CMPD_FOUR,4CUS,A
+CC(Nc1ccc(cc1)O)=O,WONKA_DATA/4CUT.pdb,CMPD_FIVE,4CUT,A
+C1Cc2ccc(cc2NC1=O)O,WONKA_DATA/4CUU.pdb,CMPD_SIX,4CUU,A

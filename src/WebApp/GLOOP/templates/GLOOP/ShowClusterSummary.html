@@ -1,0 +1,55 @@
+
+<head>
+{% load staticfiles %}
+<link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">   
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<link rel="stylesheet" 
+href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css"></style>
+<script type="text/javascript" 
+src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" 
+src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+<script>
+$(document).ready(function(){
+var url_string = "{% url 'FUDGE:get_cluster_info' my_pk %}"
+$.ajax({
+  url: url_string,
+  beforeSend: function( xhr ) {
+    xhr.overrideMimeType( "application/json; charset=x-user-defined" );
+  }
+})
+  .done(function( data ) {
+   out_html = ""
+   for (var i=0; i< data.length; i++){
+   out_html+="<tr><td>"+data[i]["act_change"].toString().slice(0,4)+"</td><td>"+data[i]["frag_from"]+"</td><td>"+data[i]["smiles"]+"</td><td>"+data[i]["mol_from"]+"</td><td>"+data[i]["mol_to"]+"</td></tr>"
+   }
+   document.getElementById('my_tbody').innerHTML = out_html;
+    $('#myTable').dataTable();
+	})
+});
+</script>
+</head>
+<body>
+<div class="container">
+<div class="col-lg-6">
+
+
+</div>
+<div class="col-lg-6">
+<table id="myTable" class="table table-striped" > 
+     <thead>  
+          <tr>  
+
+		  <th>ACTIVITY CHANGE</th>  
+            <th>FRAGMENT FROM</th> 
+		  <th>FRAGMENT TO</th>  
+            <th>MOL FROM</th>  
+            <th>MOL TO</th>  
+          </tr>  
+        </thead>  
+        <tbody id="my_tbody">
+        </tbody>  
+      </table> 
+</div></div>
+</body>
