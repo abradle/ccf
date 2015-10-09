@@ -3,8 +3,6 @@ from WONKA import views
 
 urlpatterns = patterns('',
     url(r'^(?P<target_id>\d+)/Summarise/$', views.Summarise, name='Summarise'),
-    url(r'^(?P<target_id>\d+)/SummariseORIG/$', views.SummariseORIG, name='SummariseORIG'),
-    url(r'^(?P<target_name>\w+)/SummariseCheck/$', views.SummariseCheck, name='SummariseCheck'),
     url(r'^(?P<obs_id>\d+)/SummariseBack/$', views.SummariseBack, name='SummariseBack'),
     url(r'^ScoreMol/$', views.ScoreMol, name='ScoreMol'),
     url(r'^show_point/$', views.show_point, name='show_point'),
