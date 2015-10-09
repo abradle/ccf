@@ -730,7 +730,7 @@ def get_mol(option, maps, out_put, target_id=None, extra=None):
     # First get my maps
     my_points = find_actmapoints(option, maps)
     # Now get all the mols that are associated to this
-        mmpcomps = MMPComparison.objects.filter(actmappoint__in=my_points).distinct()
+    mmpcomps = MMPComparison.objects.filter(actmappoint__in=my_points).distinct()
     #Now make the molecule SD information
     # Now make the image to look at
     if out_put == "images":
