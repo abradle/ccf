@@ -652,6 +652,8 @@ def get_coords(target, prot_list=None, comp_coords=None):
             if line[:4] != "ATOM":
                 continue
             new_point = Protein()
+            print line[12:16]
+            print int(get_atom(line[12:16].strip()))
             new_point.atom_num = int(get_atom(line[12:16].strip()))
             new_point.res_name = line[17:20].strip()
             new_point.res_num = line[22:26].strip()
@@ -674,10 +676,13 @@ def get_coords(target, prot_list=None, comp_coords=None):
                 if line[:4] != "ATOM":
                     continue
                 new_point = Protein()
+                print int(get_atom(line[12:16].strip()))
+                print line[12:16]
                 new_point.atom_num = int(get_atom(line[12:16].strip()))
                 new_point.x = float(line[30:38])
                 new_point.y = float(line[38:46])
                 new_point.z = float(line[46:54])
+                print float(line[30:38]),float(line[38:46]),float(line[46:54])
                 new_point.res_name = line[17:20].strip()
                 new_point.res_num = line[22:26].strip()
                 if comp_coords:

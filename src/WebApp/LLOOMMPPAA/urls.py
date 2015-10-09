@@ -3,11 +3,8 @@ from LLOOMMPPAA import views
 
 urlpatterns = patterns('',
     url(r'^(?P<target_id>\d+)/div_viewer/$', views.div_viewer, name='div_viewer'),
-    url(r'^(?P<target_id>\d+)/find_overlap/$', views.find_overlap, name='find_overlap'),
-    url(r'^(?P<res_pk>\d+)/cmpd_picker/$', views.cmpd_picker, name='cmpd_picker'),
     url(r'^(?P<target_id>\d+)/int_picker/$', views.int_picker, name='int_picker'),
     url(r'^(?P<target_id>\d+)/res_finder/$', views.res_finder, name='res_finder'),
-    url(r'^(?P<cmpd_id>\d+)/find_score/$', views.find_score, name='find_score'),
     url(r'^(?P<target_id>\d+)/FollowUpMaker/$', views.FollowUpMaker, name='FollowUpMaker'),
     url(r'^(?P<frag_id>\d+)/get_sdf_info/$', views.get_sdf_info, name='get_sdf_info'),
     url(r'^(?P<frag_id>\d+)/(?P<choice>\d+)/FollowUpFrag/$', views.FollowUpFrag, name='FollowUpFrag'),
