@@ -9,7 +9,7 @@ from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import Lipinski
 from rdkit import Chem
 from django.core.exceptions import ValidationError
-from Pharmacophore.models import PharmaPoint,find_pharmacophore_points
+from Pharmacophore.models import PharmaPoint,find_pharmacophore_points,UniquePharma
 from Pharmacophore.functions import eucl_dist
 from IOhandle.models import Target,ActivityPoint,Molecule,Protein
 from IOhandle.functions import centre_of_mass_from_SD_block,set_pH_sdf,set_pH,make_smarts_from_frag
@@ -912,6 +912,7 @@ def make_space_point(myfrag, actchange, target, my_type):
     ph_pt1.git_version = "DISTRIB"
 # Links back to the molecule found
     ph_pt1.mol_id = myfrag.mol_id
+    ph_pt1.uniq_id = UniquePharma.objects.get_or_create(smiles="SHAPE")[0]
     ph_pt1.pharma_id = 10000
     # Make the 3D Fragments between the two molecules
     mol1 = Chem.MolFromMolBlock(str(myfrag.mol_id.sdf_info))
