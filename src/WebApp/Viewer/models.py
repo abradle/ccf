@@ -375,8 +375,7 @@ class ViewHandler():
                                 "MOLS": get_mol, "2DMOL": view_2dmol,
                                 "MAKESIM": make_similarity_map, "VIEWMOLPK": view_mol_pk,
                                 "VIEWCMPDPK": view_cmpd_pk, "VIEWALLRES": view_all_res,
-                                "GETSP": get_sp, "BOXPLOT": gen_box_plot,
-                                "SPNOW": read_sp, "CP": make_cp, "RESCORE": rescore_mols,
+                                "BOXPLOT": gen_box_plot,
                                 "GETBASIS": get_graph_base, "GETHITS": get_hit_dict}
 
 
