@@ -16,4 +16,5 @@ extra_apps = ['IOhandle',
     'jfu',
     'south',
     "WONKA",
-    "LLOOMMPPAA"]
+    "LLOOMMPPAA",
+    "PLIFS",]
