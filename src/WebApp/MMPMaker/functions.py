@@ -1125,7 +1125,7 @@ def act_mmp_3d(out_mmps, target_id):
             if Chem.MolToSmiles(mol2, isomericSmiles=True) == Chem.MolToSmiles(core_mol, isomericSmiles=True):
                 continue
         #NOW FILTER ON SHAPE FOR THE BEST ONE
-        out_confs = generate_conformations(mol2, core_mol, num_confs=30, num_fails=30, max_iters=100, ff="MMFF")
+        out_confs = generate_conformations(mol2, core_mol, num_confs=30, num_fails=30, max_iters=30, ff="MMFF")
         if out_confs is None:
             continue
         my_mols = [Chem.MolFromMolBlock(x[0]) for x in out_confs]
