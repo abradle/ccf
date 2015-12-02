@@ -215,6 +215,8 @@ def load_in_follow_ups(library_title, path_to_file, reaction, mol_id):
         out_lib = ProductLib()
         out_lib.lib_name = library_title
         out_lib.save()
+    else:
+        out_lib = ProductLib.objects.filter(lib_name=library_title)[0]
     # Get the process
     my_process = Process()
     my_process.mol_id = mol_id

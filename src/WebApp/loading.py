@@ -1,4 +1,5 @@
 from IOhandle.models import Compound,Molecule,Protein,ActivityPoint,Project,Target
+from LLOOMMPPAA.models import Reaction
 from MMPMaker.functions import index_hydrogen_change, make_mol_mmp, make_mmp_database, make_list_mmps, act_mmp_3d, make_ph4_difference_points, find_pharma_changes
 from MMPMaker.models import MMPDiffMap, MMPComparison, ActPharmaPoint, MMPFrag
 from Group.models import Group
@@ -13,6 +14,7 @@ import ast
 from WONKA.models import ResShift
 import numpy
 from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem import MCS
 # Global variable to define what things can be used possibly
 __POSS_LIST__ = ["IC50", "Ki", "TM"]
 
@@ -514,42 +516,52 @@ def refresh_mmp_maps(target_id):
     find_pharma_changes(target_id, my_type=str(__POSS_LIST__))
 
 
-def do_lloommppaa_proc(target_id, pdb_protein, smiles, mol2_protein=None, reactants=None, products=None):
+def do_lloommppaa_proc(target_id, pdb_protein, smiles, mol2_protein=None, reactants=None, products=None, context=None):
     """Function to do the processing for LLOOMMPPAA"""
     from LLOOMMPPAA.models import PossReact
     from LLOOMMPPAA.reactions import run_react_proc, define_reacts, load_in_reagents, load_in_follow_ups, find_follow_ups, define_reaction_process
     # Load the data
     load_wonka_prot(target_id, pdb_protein, smiles)
-    # Find the potential synthesis vectors
-    define_reacts()
-    find_follow_ups(target_id=target_id)
-    # Show the sides -> USER MUST SELECT A SIDE
-    poss_reacts = PossReact.objects.filter(mol_id__prot_id__target_id=target_id)
-    context = None
-    # Loop through all the possible reactions
-    for ps_r in poss_reacts:
-        print ps_r.react_id.name
-        print "1):", ps_r.replaced_frag
-        print "2):", ps_r.retained_frag
-        print "3):", "SKIP"
-        choice = int(raw_input("Select a fragment to replace...")) 
-        if choice == 1:
-            context = ps_r.retained_frag_context
-            react_frag = ps_r.retained_frag
-            this_react = ps_r.react_id
-            break
-        elif choice == 2:
-            context = ps_r.replaced_frag_context
-            react_frag = ps_r.replaced_frag
-            this_react = ps_r.react_id
-            break
-        else:
-            continue
+    if reactants:
+        # Find the potential synthesis vectors
+        define_reacts()
+        find_follow_ups(target_id=target_id)
+        # Show the sides -> USER MUST SELECT A SIDE
+        poss_reacts = PossReact.objects.filter(mol_id__prot_id__target_id=target_id)
+        # Loop through all the possible reactions
+        for ps_r in poss_reacts:
+            print ps_r.react_id.name
+            print "1):", ps_r.replaced_frag
+            print "2):", ps_r.retained_frag
+            print "3):", "SKIP"
+            choice = int(raw_input("Select a fragment to replace...")) 
+            if choice == 1:
+                context = ps_r.retained_frag_context
+                react_frag = ps_r.retained_frag
+                this_react = ps_r.react_id
+                break
+            elif choice == 2:
+                context = ps_r.replaced_frag_context
+                react_frag = ps_r.replaced_frag
+                this_react = ps_r.react_id
+                break
+            else:
+                continue
     if not context:
         print "YOU MUST SPECIFY A CONTEXT"
-        return
-    mol_id = ps_r.mol_id
-    prot_id = ps_r.mol_id.prot_id
+        if products:
+            print "AUTO GENERATING FROM PRODUCTS"
+            print products
+            context = Chem.CanonSmiles(Chem.MolToSmiles(Chem.MolFromSmarts(MCS.FindMCS(Chem.SDMolSupplier(products)).smarts),isomericSmiles=True))
+            print context
+        else:
+            return
+    if reactants:
+        mol_id = ps_r.mol_id
+        prot_id = ps_r.mol_id.prot_id
+    else:
+        mol_id = Molecule.objects.get(prot_id__target_id=target_id,smiles=smiles)
+        prot_id = mol_id.prot_id
     my_prots = [prot_id] 
     # Set the mol2 protein for this target -> throw a warning if this doesn't happen
     if mol2_protein:
@@ -564,13 +576,19 @@ def do_lloommppaa_proc(target_id, pdb_protein, smiles, mol2_protein=None, reacta
     else:
         react_id = None
     if products:
-        prod_id = load_in_follow_ups("RUN_PROD", products, ps_r.react_id, mol_id)
+        my_react = Reaction.objects.get_or_create(name="DUMMY",react_smarts="DUMMY",retro_smarts="DUMMY", cont_smarts="DUMMY")[0]
+        this_react = my_react
+        react_frag = context
+        prod_id = load_in_follow_ups("RUN_PROD", products,my_react, mol_id)
     else:
         prod_id = None
     # Now set up the reaction itself
     react_proc = define_reaction_process(mol_id, context, my_prots, this_react, context, react_frag, products_id=prod_id, reactants_id=react_id)
     if react_id:
         react_proc.proc_stage = "RUN_REACTION"
+        react_proc.save()
+    if products:
+        react_proc.proc_stage = "GENERATE CONFS"
         react_proc.save()
     # Now run the reaction and analysis itself
     run_react_proc(react_proc)

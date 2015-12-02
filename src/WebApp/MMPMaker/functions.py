@@ -23,6 +23,10 @@ def find_core(mol1, mol2, context, option=None):
     Takes two RDKit molecules and a matching part. Option "SIMPLE" means
     attachment point isn't used.
     Returns an RDKit molecule of the core"""
+    print "MOL1",Chem.MolToSmiles(mol1)
+    print "MOL2",Chem.MolToSmiles(mol2)
+    print "CONTEXT",Chem.MolToSmiles(context)
+
     match2 = mol2.GetSubstructMatch(context)
     myatm = None
     for idx in range(mol2.GetNumAtoms() - 1, - 1, - 1):

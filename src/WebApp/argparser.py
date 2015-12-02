@@ -21,6 +21,7 @@ def myargparse():
     mol2_protein=None 
     reactants=None
     products=None
+    context=None
 # 
     refresh_map_flag = None
     index_h_flag = None
@@ -78,7 +79,7 @@ def myargparse():
     opt_list = [("target=", "t:"), ("mols=", "m:"), ("acts=", "a:"),
                 ("mmp=", "p:"), ("cmps=", "c:"), ("datasite=", "f:"),
                 ("refreshmaps=", "e:"), ("hchange=", "q:"), ("make3d=", "w:"),
-                ("find3d=", "l:"), ("prot=", "z:"), ("ll_prot=", "j:"),("deleteTarget=", "d:"),("listTargets=", "b:"), ("lloommppaa=", "r:"), ("wonka=", "k:"),("smiles=", "j:"), ("csv_path=", "v"), ("reactants=", "i"), ("products=","h:"), ("mol2_prot=","g:")]
+                ("find3d=", "l:"), ("prot=", "z:"), ("ll_prot=", "j:"),("deleteTarget=", "d:"),("listTargets=", "b:"), ("lloommppaa=", "r:"), ("wonka=", "k:"),("smiles=", "j:"), ("csv_path=", "v"), ("reactants=", "i"), ("products=","h:"), ("mol2_prot=","g:"),("context=","z:")]
     try:
         # Parse the arguments
         opts, args = getopt.getopt(sys.argv[1:],"".join([x[1] for x in opt_list]),[x[0] for x in opt_list])
@@ -131,6 +132,8 @@ def myargparse():
             reactants = arg
         elif opt in ("--products",):
             products = arg
+        elif opt in ("--context",):
+            context = arg
         elif opt in ("--mol2_prot",):
             mol2_prot = arg
         elif opt in ("--smiles",):
@@ -179,6 +182,6 @@ def myargparse():
     if my_cmps:
         load_compounds(my_cmps)
     if lloommppaa_flag:
-        do_lloommppaa_proc(target.pk, ll_prot, smiles, mol2_prot, reactants, products)
+        do_lloommppaa_proc(target.pk, ll_prot, smiles, mol2_prot, reactants, products, context)
     if list_targ_flag:
         list_targets()
