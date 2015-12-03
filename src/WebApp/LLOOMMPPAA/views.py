@@ -266,8 +266,6 @@ def ring_test(smiles):
 
 def find_mols(request, ra_id):
     """Function to get the molecules for a given analysis"""
-    # Get the RA
-    anal_id = RunAnalysis.objects.get(pk=ra_id)
     # Get the method
     method_id = request.GET["METHOD"]
     #num_samps = request.GET["NUM_SAMPS"]
@@ -282,6 +280,13 @@ def find_mols(request, ra_id):
         ntopick = int(request.GET["NO_TO_PICK"])
     else:
         ntopick = 30
+    return pick_this_div(method_id, ntopick, my_filter)
+
+
+def pick_this_div(method_id, ntopick=30, my_filter=None)
+    """Function to get the indices to select molecules - returns the Compound PKs of the selected molecules""" 
+    # Get the RA
+    anal_id = RunAnalysis.objects.get(pk=ra_id)
     target_id = anal_id.react_proc_id.mol_id.prot_id.target_id.pk
     if method_id == "FOCUSSED":
         my_picks = best_from_wonka(target_id, anal_id)
