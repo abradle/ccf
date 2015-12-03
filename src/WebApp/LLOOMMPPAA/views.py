@@ -280,10 +280,20 @@ def find_mols(request, ra_id):
         ntopick = int(request.GET["NO_TO_PICK"])
     else:
         ntopick = 30
-    return pick_this_div(method_id, ntopick, my_filter)
+    div_picks, mols = pick_this_div(method_id, ntopick, my_filter)
+    return [mols[x][1] for x in div_picks]
 
 
-def pick_this_div(method_id, ntopick=30, my_filter=None)
+def get_sdf_file(ra_id, method_id="PLIFS_DEFAILT", ntopick=30, my_filter=None):
+    """Function to get an SDF file for an RA ID"""
+    div_picks, mols = pick_this_div(method_id, ntopick, my_filter)
+    my_mols = Molecule.objects.filter(pk__in=[mols[x][1] for x in div_picks])
+    out_sd = Chem.SDWriter("OUTPUT."+str(ra_id)+".sdf")
+    for m in my_mols:
+        out_sd.write(Chem.MolFromMolBlock(str(m.sdf_info)))
+
+
+def pick_this_div(method_id, ntopick=30, my_filter=None):
     """Function to get the indices to select molecules - returns the Compound PKs of the selected molecules""" 
     # Get the RA
     anal_id = RunAnalysis.objects.get(pk=ra_id)
@@ -322,8 +332,7 @@ def pick_this_div(method_id, ntopick=30, my_filter=None)
         if method_id[:5] == "PLIFS":
             if len(method_id.split("__")) > 1:
                 opt = method_id.split("__")[1]
-        div_picks = [mols[x][1] for x in div_pick(vect_l, ntopick, opt)]
-    return div_picks
+    return div_pick(vect_l, ntopick, opt), mols
 
 
 def get_mol_sdf(request, ra_id):
