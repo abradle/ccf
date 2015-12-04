@@ -317,7 +317,7 @@ def pick_this_div(ra_id, method_id, ntopick=30, my_filter=None):
             if counter == ntopick:
                 break
     else:
-        mols = LLConf.objects.filter(clash__gte=anal_id.clash, rmsd__gte=anal_id.rmsd, shape_dist__lte=anal_id.shape_dist, reactionprocess=anal_id.react_proc_id).values_list("mol_id__cmpd_id__pk", "mol_id__pk")
+        mols = LLConf.objects.filter(clash__gte=anal_id.clash, rmsd__gte=anal_id.rmsd, shape_dist__lte=anal_id.shape_dist, reactionprocess=anal_id.react_proc_id).order_by("mol_id__cmpd_id__pk").distinct("mol_id__cmpd_id__pk").values_list("mol_id__cmpd_id__pk", "mol_id__pk")
         if my_filter == "RING":
             # Filter out all the rings 
             mols = [x for x in mols if ring_test(str(Compound.objects.get(pk=x[0]).smiles))]
