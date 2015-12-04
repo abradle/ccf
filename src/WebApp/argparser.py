@@ -3,7 +3,6 @@ import getopt
 from loading import *
 from IOhandle.models import Target
 
-
 def myargparse():
     """Function to parse arguments and handle functions
     Takes no args
@@ -33,7 +32,9 @@ def myargparse():
     wonka_flag = None
     csv_path = None
     data_site = "SGC"
+    get_picks = None
     preamble = """
+    
  _______  _______  _______  _______  _______  _______  _______  _______
 (  ___  )(  ___  )(       )(       )(  ____ )(  ____ )(  ___  )(  ___  )
 | (   ) || (   ) || () () || () () || (    )|| (    )|| (   ) || (   ) |
@@ -78,7 +79,7 @@ def myargparse():
     # List of options
     opt_list = [("target=", "t:"), ("mols=", "m:"), ("acts=", "a:"),
                 ("mmp=", "p:"), ("cmps=", "c:"), ("datasite=", "f:"),
-                ("refreshmaps=", "e:"), ("hchange=", "q:"), ("make3d=", "w:"),
+                ("refreshmaps=", "e:"), ("hchange=", "q:"), ("make3d=", "w:"),("getPicks=","x")
                 ("find3d=", "l:"), ("prot=", "z:"), ("ll_prot=", "j:"),("deleteTarget=", "d:"),("listTargets=", "b:"), ("lloommppaa=", "r:"), ("wonka=", "k:"),("smiles=", "j:"), ("csv_path=", "v"), ("reactants=", "i"), ("products=","h:"), ("mol2_prot=","g:"),("context=","z:")]
     try:
         # Parse the arguments
@@ -140,6 +141,8 @@ def myargparse():
             smiles = arg
         elif opt in ("--ll_prot",):
             ll_prot = arg
+        elif opt in ("--getPicks"):
+            get_picks = arg
     # Initialise dummy variables
     print preamble
     initialise_dummys()
@@ -185,3 +188,5 @@ def myargparse():
         do_lloommppaa_proc(target.pk, ll_prot, smiles, mol2_prot, reactants, products, context)
     if list_targ_flag:
         list_targets()
+    if get_picks:
+        get_sdf_file_ll(target.pk)
