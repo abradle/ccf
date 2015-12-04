@@ -1,5 +1,6 @@
 from IOhandle.models import Compound,Molecule,Protein,ActivityPoint,Project,Target
 from LLOOMMPPAA.models import Reaction
+from LLOOMMPPAA.views import get_sdf_file
 from MMPMaker.functions import index_hydrogen_change, make_mol_mmp, make_mmp_database, make_list_mmps, act_mmp_3d, make_ph4_difference_points, find_pharma_changes
 from MMPMaker.models import MMPDiffMap, MMPComparison, ActPharmaPoint, MMPFrag
 from Group.models import Group
@@ -49,6 +50,8 @@ def read_CSV(file_in):
     Returns a csv dict object"""
     return csv.DictReader(file_in)
 
+def get_sdf_file_ll(target_id):
+    get_sdf_file(target_id)
 
 def add_new_mol(rdmol, target):
     """Function to add a new bound Molecule object
