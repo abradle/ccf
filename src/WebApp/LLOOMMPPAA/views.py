@@ -284,11 +284,16 @@ def find_mols(request, ra_id):
     return [mols[x][1] for x in div_picks]
 
 
-def get_sdf_file(ra_id, method_id="PLIFS_DEFAILT", ntopick=30, my_filter=None):
+def get_sdf_file(target_id, method_id="PLIFS_DEFAILT", ntopick=30, my_filter=None):
     """Function to get an SDF file for an RA ID"""
+    # First get the RA_ID
+    ra_id = RunAnalysis.objects.filter(target_id=target_id)[0].pk
+    # Now get the picks
     div_picks, mols = pick_this_div(ra_id, method_id, ntopick, my_filter)
+    target = Target.objects.get(pk=target_id)
     my_mols = Molecule.objects.filter(pk__in=[mols[x][1] for x in div_picks])
-    out_sd = Chem.SDWriter("OUTPUT."+str(ra_id)+".sdf")
+    # Now write this out
+    out_sd = Chem.SDWriter("OUTPUT."+str(ra_id)+"_"+target.title+".sdf")
     for m in my_mols:
         out_sd.write(Chem.MolFromMolBlock(str(m.sdf_info)))
 
