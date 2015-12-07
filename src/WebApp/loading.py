@@ -1,6 +1,6 @@
 from IOhandle.models import Compound,Molecule,Protein,ActivityPoint,Project,Target
 from LLOOMMPPAA.models import Reaction
-from LLOOMMPPAA.views import get_sdf_file
+#from LLOOMMPPAA.views import get_sdf_file
 from MMPMaker.functions import index_hydrogen_change, make_mol_mmp, make_mmp_database, make_list_mmps, act_mmp_3d, make_ph4_difference_points, find_pharma_changes
 from MMPMaker.models import MMPDiffMap, MMPComparison, ActPharmaPoint, MMPFrag
 from Group.models import Group
@@ -563,7 +563,7 @@ def do_lloommppaa_proc(target_id, pdb_protein, smiles, mol2_protein=None, reacta
         mol_id = ps_r.mol_id
         prot_id = ps_r.mol_id.prot_id
     else:
-        mol_id = Molecule.objects.get(prot_id__target_id=target_id,smiles=smiles)
+        mol_id = Molecule.objects.filter(prot_id__target_id=target_id,smiles=smiles)[0]
         prot_id = mol_id.prot_id
     my_prots = [prot_id] 
     # Set the mol2 protein for this target -> throw a warning if this doesn't happen

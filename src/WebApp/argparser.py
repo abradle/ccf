@@ -79,7 +79,7 @@ def myargparse():
     # List of options
     opt_list = [("target=", "t:"), ("mols=", "m:"), ("acts=", "a:"),
                 ("mmp=", "p:"), ("cmps=", "c:"), ("datasite=", "f:"),
-                ("refreshmaps=", "e:"), ("hchange=", "q:"), ("make3d=", "w:"),("getPicks=","x")
+                ("refreshmaps=", "e:"), ("hchange=", "q:"), ("make3d=", "w:"),("getPicks=","x"),
                 ("find3d=", "l:"), ("prot=", "z:"), ("ll_prot=", "j:"),("deleteTarget=", "d:"),("listTargets=", "b:"), ("lloommppaa=", "r:"), ("wonka=", "k:"),("smiles=", "j:"), ("csv_path=", "v"), ("reactants=", "i"), ("products=","h:"), ("mol2_prot=","g:"),("context=","z:")]
     try:
         # Parse the arguments
