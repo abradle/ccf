@@ -777,17 +777,19 @@ def make_pharma_probes(target_id, opt=None, clash=-1.0, rmsd=0.5, shape_dist=0.2
             new_fragment.atom_ids = str(feat.GetAtomIds())
             try:
                 new_fragment.validate_unique()
+                new_fragment.save()
             except ValidationError:
                 continue
+                
             new_fragments.append(new_fragment)
             new_counter += 1
             if new_counter == 5000:
                 print "COMMITING"
-                PlifProbe.objects.bulk_create(new_fragments)
+                #PlifProbe.objects.bulk_create(new_fragments)
                 new_fragments = []
                 done_list = []
                 new_counter = 0 
-    PlifProbe.objects.bulk_create(new_fragments)
+    #PlifProbe.objects.bulk_create(new_fragments)
     sys.stdout.write("\rMaking molecule probes %d%% complete..." % 100)
     sys.stdout.flush()
     print "Made molecule probes"
