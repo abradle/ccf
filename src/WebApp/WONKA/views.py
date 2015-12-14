@@ -1160,6 +1160,11 @@ def Summarise(request, target_id):
         # Now append these to the contex
         for mol_pk in request.GET["ALT_MOLS"].split(","):
             ll_mols.append(Molecule.objects.get(pk=int(mol_pk)))
+    if "GET_LL" in request.GET:
+        ll_mol_pks = Molecule.objects.filter(prot_id__target_id__title=request.GET["GET_LL"])
+        for mol_pk in ll_mol_pks:
+            ll_mols.append(Molecule.objects.get(pk=int(mol_pk)
+    if ll_mols
         for mol in ll_mols:
             i_ids = InternalIDLink.objects.filter(mol_id=mol).values_list("internal_id", flat=True)
             if i_ids:
