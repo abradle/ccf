@@ -92,7 +92,7 @@ def myargparse():
     if len(opts) == 0:
         print print_out
         return
-
+    print opts
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print print_out
@@ -185,6 +185,7 @@ def myargparse():
     if my_cmps:
         load_compounds(my_cmps)
     if lloommppaa_flag:
+        print "HEREEEEE"
         do_lloommppaa_proc(target.pk, ll_prot, smiles, mol2_prot, reactants, products, context)
     if list_targ_flag:
         list_targets()
