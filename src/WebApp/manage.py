@@ -59,11 +59,6 @@ import Group
 from loading import load_mols, load_activity_data, do_oommppaa_proc, initialise_dummys
 
 if __name__ == "__main__":
-    out_std = open("out.stderr", "w")
-    origstderr = sys.stderr
-    sys.stderr = out_std
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "WebApp.settings")
     print "HELLO"
     myargparse()
-    sys.stderr = origstderr
-    out_std.close()
