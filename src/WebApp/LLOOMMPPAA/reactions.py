@@ -509,7 +509,7 @@ def run_react_proc(react_proc):
         print "MOVING ONTO INTERACTION SCHEMES"
         init_schemes(refresh=True, react_id=react_proc)
     # Now do the analysis
-    do_analysis(react_proc)
+    #do_analysis(react_proc)
     react_proc.proc_stage = "COMPLETE"
     react_proc.stage_completion = 100
     react_proc.save()

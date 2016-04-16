@@ -92,7 +92,7 @@ def myargparse():
     if len(opts) == 0:
         print print_out
         return
-
+    print opts
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print print_out
