@@ -29,33 +29,6 @@ schemes = {"default":
               "angle_1": "120:360",
               "angle_2": None}
              },
-            "broad":
-            {
-             "Arom5_Arom5":
-             {"dist": 5.5,
-              "angle_1": None,
-              "angle_2": None},
-             "Arom5_Arom6":
-             {"dist": 5.5,
-              "angle_1": None,
-              "angle_2": None},
-             "Arom6_Arom6":
-             {"dist": 5.5,
-              "angle_1": None,
-              "angle_2": None},
-            "AcidicGroup_BasicGroup":
-             {"dist": 5.5,
-              "angle_1": None,
-              "angle_2": None},
-            "Hydrophobe_Hydrophobe":
-             {"dist": 5.0,
-              "angle_1": None,
-              "angle_2": None},
-            "SingleAtomAcceptor_SingleAtomDonor":
-             {"dist": 4.5,
-              "angle_1": "90:360",
-              "angle_2": None}
-             },
            }
 
 
