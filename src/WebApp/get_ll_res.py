@@ -4,7 +4,7 @@ from LLOOMMPPAA.functions import *
 from PLIFS.models import *
 
 
-def pick_div(mols, ntopick=30, react_proc=3):
+def pick_div(ntopick=30, react_proc=3):
     """Return the inidces of a list of mols (Django Compounds) to pick """
     # Now get the picks -- use default values
     clash = -1.0
@@ -28,4 +28,5 @@ def pick_div(mols, ntopick=30, react_proc=3):
     for cmpd in cmpds:
         out_sd.write(Chem.MolFromSmiles(str(cmpd.smiles)))
 
-pick_div(mols)
+### IN YOUR CASE YOU CAN USE
+#pick_div(ntopick=num_to_pick, react_proc=pk_to_use)
