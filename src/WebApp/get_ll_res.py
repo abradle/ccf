@@ -4,14 +4,14 @@ from LLOOMMPPAA.functions import *
 from PLIFS.models import *
 
 
-def pick_div(ntopick=30, react_proc=3):
+def pick_div(ntopick=30, react_procs=[3,4,5]):
     """Return the inidces of a list of mols (Django Compounds) to pick """
     # Now get the picks -- use default values
     clash = -1.0
     rmsd = 0.5
     shape_dist = 1.0
     react_proc = ReactionProcess.objects.filter(pk=react_proc)
-    mols = LLConf.objects.filter(clash__gte=clash, rmsd__gte=rmsd, shape_dist__lte=shape_dist,reactionprocess=react_proc).order_by("mol_id__cmpd_id__pk").distinct("mol_id__cmpd_id__pk").values_list("mol_id__cmpd_id__pk", "mol_id__pk")
+    mols = LLConf.objects.filter(clash__gte=clash, rmsd__gte=rmsd, shape_dist__lte=shape_dist,reactionprocess__in=react_procs).order_by("mol_id__cmpd_id__pk").distinct("mol_id__cmpd_id__pk").values_list("mol_id__cmpd_id__pk", "mol_id__pk")
     tot_bits = sorted(list(set(Interaction.objects.filter(target_id=react_proc.mol_id.target_id, mol_id__cmpd_id__in=[x[0] for x in mols]).values_list("interaction_id__probe_dest_id__pk", flat=True))))
     if not tot_bits:
         print "NO INTERACTIONS FOUND"
